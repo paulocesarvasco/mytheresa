@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -15,27 +16,44 @@ func New(db *gorm.DB) *ProductStore {
 		db: db,
 	}
 }
-
-func (r *ProductStore) ListProducts(ctx context.Context, limit int, offset int) ([]Product, int64, error) {
+func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {
 	var products []Product
 	var total int64
 
-	if err := r.db.
-		WithContext(ctx).
-		Model(&Product{}).
-		Count(&total).
-		Error; err != nil {
+	countQuery := r.db.WithContext(ctx).Model(&Product{})
+
+	if categoryCode != "" {
+		countQuery = countQuery.
+			Joins("Category").
+			Where(`"Category"."code" = ?`, categoryCode)
+	}
+	if maxPrice != nil {
+		countQuery = countQuery.Where("products.price < ?", maxPrice)
+	}
+
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.
-		WithContext(ctx).
-		Order("id ASC").
+	selectQuery := r.db.WithContext(ctx).
+		Order("products.id ASC").
 		Limit(limit).
 		Offset(offset).
 		Preload("Category").
-		Preload("Variants").Find(&products).Error; err != nil {
+		Preload("Variants")
+
+	if categoryCode != "" {
+		selectQuery = selectQuery.Joins("Category").
+			Where(`"Category"."code" = ?`, categoryCode)
+	}
+
+	if maxPrice != nil {
+		selectQuery = selectQuery.Where("products.price < ?", maxPrice)
+	}
+
+	if err := selectQuery.Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
+
 	return products, total, nil
 }
