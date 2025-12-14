@@ -1,11 +1,10 @@
-package models
+package repository
 
 import (
 	"github.com/shopspring/decimal"
 )
 
-// Product represents a product in the catalog.
-// It includes a unique code and a price.
+// Product is the database model for catalog products.
 type Product struct {
 	ID       uint            `gorm:"primaryKey"`
 	Code     string          `gorm:"uniqueIndex;not null"`
@@ -13,6 +12,6 @@ type Product struct {
 	Variants []Variant       `gorm:"foreignKey:ProductID"`
 }
 
-func (p *Product) TableName() string {
+func (Product) TableName() string {
 	return "products"
 }

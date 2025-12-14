@@ -3,11 +3,11 @@ package catalog
 import (
 	"context"
 
-	"github.com/mytheresa/go-hiring-challenge/models"
+	"github.com/mytheresa/go-hiring-challenge/app/repository"
 )
 
 type ProductStore interface {
-	ListProducts(ctx context.Context) ([]models.Product, error)
+	ListProducts(ctx context.Context) ([]repository.Product, error)
 }
 
 type ProductView struct {
