@@ -16,13 +16,26 @@ func New(db *gorm.DB) *ProductStore {
 	}
 }
 
-func (r *ProductStore) ListProducts(ctx context.Context) ([]Product, error) {
+func (r *ProductStore) ListProducts(ctx context.Context, limit int, offset int) ([]Product, int64, error) {
 	var products []Product
+	var total int64
+
 	if err := r.db.
 		WithContext(ctx).
+		Model(&Product{}).
+		Count(&total).
+		Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.
+		WithContext(ctx).
+		Order("id ASC").
+		Limit(limit).
+		Offset(offset).
 		Preload("Category").
 		Preload("Variants").Find(&products).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return products, nil
+	return products, total, nil
 }

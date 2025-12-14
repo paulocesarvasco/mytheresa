@@ -7,7 +7,12 @@ import (
 )
 
 type ProductStore interface {
-	ListProducts(ctx context.Context) ([]repository.Product, error)
+	ListProducts(ctx context.Context, limit int, offset int) ([]repository.Product, int64, error)
+}
+
+type ProductPage struct {
+	Products []ProductView `json:"products"`
+	Total    int64         `json:"total"`
 }
 
 type ProductView struct {
@@ -25,11 +30,11 @@ func New(store ProductStore) *Service {
 	return &Service{store: store}
 }
 
-func (s *Service) ListProducts(ctx context.Context) ([]ProductView, error) {
-	res, err := s.store.ListProducts(ctx)
+func (s *Service) ListProducts(ctx context.Context, limit int, offset int) (ProductPage, error) {
+	res, total, err := s.store.ListProducts(ctx, limit, offset)
 	if err != nil {
 		// TODO: improve error handler
-		return nil, err
+		return ProductPage{}, err
 	}
 
 	products := make([]ProductView, len(res))
@@ -42,5 +47,6 @@ func (s *Service) ListProducts(ctx context.Context) ([]ProductView, error) {
 		}
 	}
 
-	return products, nil
+	// TODO: handle cases without results
+	return ProductPage{Products: products, Total: total}, nil
 }
