@@ -1,6 +1,8 @@
 package models
 
 import (
+	"context"
+
 	"gorm.io/gorm"
 )
 
@@ -14,7 +16,7 @@ func NewProductsRepository(db *gorm.DB) *ProductsRepository {
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
+func (r *ProductsRepository) ListProducts(ctx context.Context) ([]Product, error) {
 	var products []Product
 	if err := r.db.Preload("Variants").Find(&products).Error; err != nil {
 		return nil, err
