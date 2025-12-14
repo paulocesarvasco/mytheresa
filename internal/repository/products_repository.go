@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -32,7 +33,7 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, errorsapi.ErrRepositoryCountProducts
 	}
 
 	selectQuery := r.db.WithContext(ctx).
@@ -52,7 +53,7 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := selectQuery.Find(&products).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, errorsapi.ErrRepositoryFetchProducts
 	}
 
 	return products, total, nil

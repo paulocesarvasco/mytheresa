@@ -1,13 +1,13 @@
 package catalogapi
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
+	"github.com/mytheresa/go-hiring-challenge/internal/api"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
+	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/shopspring/decimal"
 )
 
@@ -32,7 +32,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("limit"); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed < 1 {
-			http.Error(w, "invalid limit parameter", http.StatusBadRequest)
+			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
 			return
 		}
 		if parsed > 100 {
@@ -45,7 +45,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("offset"); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed < 0 {
-			http.Error(w, "invalid offset parameter", http.StatusBadRequest)
+			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
 			return
 		}
 		offset = parsed
@@ -61,7 +61,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("max_price"); v != "" {
 		parsed, err := decimal.NewFromString(v)
 		if err != nil || !parsed.GreaterThan(decimal.Zero) {
-			http.Error(w, "invalid max_price parameter", http.StatusBadRequest)
+			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
 			return
 		}
 		maxPrice = &parsed
@@ -69,19 +69,8 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := h.service.ListProducts(r.Context(), limit, offset, categoryCode, maxPrice)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	responseBody := &bytes.Buffer{}
-	if err := json.NewEncoder(responseBody).Encode(products); err != nil {
-		// TODO: improve error response
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseBody.Bytes())
-
+	api.OKResponse(w, products)
 }

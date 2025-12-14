@@ -33,7 +33,6 @@ func New(store ProductStore) *Service {
 func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (ProductPage, error) {
 	res, total, err := s.store.ListProducts(ctx, limit, offset, categoryCode, maxPrice)
 	if err != nil {
-		// TODO: improve error handler
 		return ProductPage{}, err
 	}
 
