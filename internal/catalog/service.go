@@ -11,8 +11,10 @@ type ProductStore interface {
 }
 
 type ProductView struct {
-	Code  string  `json:"code"`
-	Price float64 `json:"price"`
+	CategoryName string  `json:"category_name"`
+	CategoryCode string  `json:"category_code"`
+	Code         string  `json:"code"`
+	Price        float64 `json:"price"`
 }
 
 type Service struct {
@@ -33,8 +35,10 @@ func (s *Service) ListProducts(ctx context.Context) ([]ProductView, error) {
 	products := make([]ProductView, len(res))
 	for i, p := range res {
 		products[i] = ProductView{
-			Code:  p.Code,
-			Price: p.Price.InexactFloat64(),
+			CategoryName: p.Category.Name,
+			CategoryCode: p.Category.Code,
+			Code:         p.Code,
+			Price:        p.Price.InexactFloat64(),
 		}
 	}
 

@@ -4,7 +4,9 @@ package repository
 type Category struct {
 	ID   uint   `gorm:"primaryKey"`
 	Code string `gorm:"uniqueIndex;not null"`
-	Name string `gorm:"uniqueIndex;not null"`
+	Name string `gorm:"not null"`
+
+	Products []Product `gorm:"foreignKey:CategoryID"`
 }
 
 func (Category) TableName() string {

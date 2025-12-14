@@ -18,7 +18,10 @@ func New(db *gorm.DB) *ProductStore {
 
 func (r *ProductStore) ListProducts(ctx context.Context) ([]Product, error) {
 	var products []Product
-	if err := r.db.Preload("Variants").Find(&products).Error; err != nil {
+	if err := r.db.
+		WithContext(ctx).
+		Preload("Category").
+		Preload("Variants").Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
