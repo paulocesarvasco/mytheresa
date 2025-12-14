@@ -4,6 +4,7 @@ import (
 	"context"
 
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -18,6 +19,8 @@ func New(db *gorm.DB) *ProductStore {
 	}
 }
 func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {
+	log := logs.NewLogger()
+
 	var products []Product
 	var total int64
 
@@ -33,6 +36,7 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
+		log.Error(ctx, "count", "error", err)
 		return nil, 0, errorsapi.ErrRepositoryCountProducts
 	}
 
@@ -53,6 +57,7 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := selectQuery.Find(&products).Error; err != nil {
+		log.Error(ctx, "select", "error", err)
 		return nil, 0, errorsapi.ErrRepositoryFetchProducts
 	}
 

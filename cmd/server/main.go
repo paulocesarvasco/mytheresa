@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,10 +19,13 @@ import (
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	"github.com/mytheresa/go-hiring-challenge/internal/database"
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/mytheresa/go-hiring-challenge/internal/repository"
 )
 
 func main() {
+	logs.Init(slog.LevelDebug)
+
 	// Load environment variables
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("error loading .env file: %s", err)
@@ -51,8 +55,10 @@ func main() {
 	// Defaults middlewares
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	// Custom logger
+	r.Use(logs.Middleware)
 
 	// Routes
 	r.Get("/catalog", catalogHandler.GetProducts)
