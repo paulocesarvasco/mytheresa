@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mytheresa/go-hiring-challenge/app/catalog"
+	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 )
 
 type Handler struct {

@@ -3,7 +3,7 @@ package catalog
 import (
 	"context"
 
-	"github.com/mytheresa/go-hiring-challenge/app/repository"
+	"github.com/mytheresa/go-hiring-challenge/internal/repository"
 )
 
 type ProductStore interface {
