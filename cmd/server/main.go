@@ -8,8 +8,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	"github.com/mytheresa/go-hiring-challenge/internal/database"
@@ -17,16 +22,16 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file
+	// Load environment variables
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+		log.Fatalf("error loading .env file: %s", err)
 	}
 
-	// signal handling for graceful shutdown
+	// Signal handling for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// Initialize database connection
+	// Initialize database
 	db, close := database.New(
 		os.Getenv("POSTGRES_USER"),
 		os.Getenv("POSTGRES_PASSWORD"),
@@ -35,33 +40,48 @@ func main() {
 	)
 	defer close()
 
-	// Initialize handlers
+	// Initialize dependencies
 	prodRepo := repository.New(db)
 	catalogService := catalog.New(prodRepo)
-	c := catalogapi.New(catalogService)
+	catalogHandler := catalogapi.New(catalogService)
 
-	// Set up routing
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /catalog", c.GetProducts)
+	// Router
+	r := chi.NewRouter()
 
-	// Set up the HTTP server
+	// Defaults middlewares
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	// Routes
+	r.Get("/catalog", catalogHandler.GetProducts)
+
+	// HTTP server
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
-		Handler: mux,
+		Addr:    fmt.Sprintf(":%s", os.Getenv("HTTP_PORT")),
+		Handler: r,
 	}
 
-	// Start the server
+	// Start server
 	go func() {
-		log.Printf("Starting server on http://%s", srv.Addr)
+		log.Printf("starting server on http://localhost%s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed: %s", err)
+			log.Fatalf("server failed: %s", err)
 		}
-
-		log.Println("Server stopped gracefully")
 	}()
 
+	// Wait for shutdown signal
 	<-ctx.Done()
-	log.Println("Shutting down server...")
-	srv.Shutdown(ctx)
-	stop()
+	log.Println("shutting down server...")
+
+	// Graceful shutdown
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("server shutdown error: %v", err)
+	}
+
+	log.Println("server stopped gracefully")
 }

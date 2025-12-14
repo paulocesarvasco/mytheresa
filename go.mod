@@ -5,6 +5,8 @@ go 1.24.3
 require github.com/joho/godotenv v1.5.1
 
 require (
+	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/render v1.0.3
 	github.com/lib/pq v1.10.9
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.10.0
@@ -13,6 +15,7 @@ require (
 )
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

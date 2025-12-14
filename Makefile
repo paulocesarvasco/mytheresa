@@ -1,5 +1,5 @@
 tidy ::
-	@go mod tidy && go mod vendor
+	@go mod tidy
 
 seed ::
 	@go run cmd/seed/main.go
