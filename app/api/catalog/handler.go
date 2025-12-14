@@ -1,56 +1,39 @@
-package catalog
+package catalogapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 
-	"github.com/mytheresa/go-hiring-challenge/models"
+	"github.com/mytheresa/go-hiring-challenge/app/catalog"
 )
 
-type Response struct {
-	Products []Product `json:"products"`
+type Handler struct {
+	service *catalog.Service
 }
 
-type Product struct {
-	Code  string  `json:"code"`
-	Price float64 `json:"price"`
-}
-
-type CatalogHandler struct {
-	repo *models.ProductsRepository
-}
-
-func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
-	return &CatalogHandler{
-		repo: r,
+func New(s *catalog.Service) *Handler {
+	return &Handler{
+		service: s,
 	}
 }
 
-func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
-	res, err := h.repo.GetAllProducts()
+func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := h.service.ListProducts(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Map response
-	products := make([]Product, len(res))
-	for i, p := range res {
-		products[i] = Product{
-			Code:  p.Code,
-			Price: p.Price.InexactFloat64(),
-		}
-	}
-
-	// Return the products as a JSON response
-	w.Header().Set("Content-Type", "application/json")
-
-	response := Response{
-		Products: products,
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	responseBody := &bytes.Buffer{}
+	if err := json.NewEncoder(responseBody).Encode(products); err != nil {
+		// TODO: improve error response
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBody.Bytes())
+
 }
