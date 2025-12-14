@@ -32,7 +32,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("limit"); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed < 1 {
-			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
+			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
 			return
 		}
 		if parsed > 100 {
@@ -45,7 +45,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("offset"); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed < 0 {
-			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
+			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
 			return
 		}
 		offset = parsed
@@ -61,7 +61,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	if v := queryParameters.Get("max_price"); v != "" {
 		parsed, err := decimal.NewFromString(v)
 		if err != nil || !parsed.GreaterThan(decimal.Zero) {
-			api.ErrorResponse(w, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
+			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
 			return
 		}
 		maxPrice = &parsed
@@ -69,8 +69,9 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := h.service.ListProducts(r.Context(), limit, offset, categoryCode, maxPrice)
 	if err != nil {
-		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
-	api.OKResponse(w, products)
+
+	api.OKResponse(w, r, products)
 }
