@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/stretchr/testify/assert"
@@ -132,8 +131,9 @@ func TestGetProducts(t *testing.T) {
 			s := NewFakeService()
 			s.SetListProductsResponse(tt.fakeProducts, tt.fakeError)
 			h := New(s)
+			r := Routes(h)
 
-			ts := httptest.NewServer(http.HandlerFunc(h.GetProducts))
+			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			u, err := url.Parse(ts.URL)
@@ -211,14 +211,12 @@ func TestGetDetailProduct(t *testing.T) {
 			s := NewFakeService()
 			s.SetDetailProductResponse(tt.fakeDetails, tt.fakeError)
 			h := New(s)
-
-			r := chi.NewRouter()
-			r.Get("/catalog/{code}", h.GetDetailProduct)
+			r := Routes(h)
 
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			res, err := ts.Client().Get(ts.URL + "/catalog/" + tt.productCode)
+			res, err := ts.Client().Get(ts.URL + "/" + tt.productCode)
 			require.NoError(t, err)
 			defer res.Body.Close()
 

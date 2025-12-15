@@ -62,10 +62,7 @@ func main() {
 	r.Use(logs.Middleware)
 
 	// Routes
-	r.Route("/catalog", func(r chi.Router) {
-		r.Get("/", catalogHandler.GetProducts)
-		r.Get("/{code}", catalogHandler.GetDetailProduct)
-	})
+	r.Mount("/catalog", catalogapi.Routes(catalogHandler))
 
 	// HTTP server
 	srv := &http.Server{

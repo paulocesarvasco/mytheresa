@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mytheresa/go-hiring-challenge/internal/api"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
@@ -32,53 +30,12 @@ func New(s Service) *Handler {
 }
 
 func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	queryParameters := r.URL.Query()
+	p := getQueryParams(r)
 
-	limit := 10
-	if v := queryParameters.Get("limit"); v != "" {
-		parsed, err := strconv.Atoi(v)
-		if err != nil || parsed < 1 {
-			h.log.Warn(r.Context(), "invalid limit parameter", "error", err, "limit", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
-			return
-		}
-		if parsed > 100 {
-			parsed = 100
-		}
-		limit = parsed
-	}
-
-	offset := 0
-	if v := queryParameters.Get("offset"); v != "" {
-		parsed, err := strconv.Atoi(v)
-		if err != nil || parsed < 0 {
-			h.log.Warn(r.Context(), "invalid offset parameter", "error", err, "offset", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
-			return
-		}
-		offset = parsed
-	}
-
-	categoryCode := ""
-	if v := queryParameters.Get("category_code"); v != "" {
-		// TODO: validate input
-		categoryCode = v
-	}
-
-	var maxPrice *decimal.Decimal
-	if v := queryParameters.Get("max_price"); v != "" {
-		parsed, err := decimal.NewFromString(v)
-		if err != nil || !parsed.GreaterThan(decimal.Zero) {
-			h.log.Warn(r.Context(), "invalid max_price parameter", "error", err, "max_price", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
-			return
-		}
-		maxPrice = &parsed
-	}
-
-	products, err := h.service.ListProducts(r.Context(), limit, offset, categoryCode, maxPrice)
+	products, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
 	if err != nil {
-		h.log.Error(r.Context(), "list products failed", "err", err)
+		h.log.Error(r.Context(), "list products failed",
+			"err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -87,21 +44,16 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
-	code := chi.URLParam(r, "code")
+	p := getPathParams(r)
 
-	if !isValidProductCode(code) {
-		h.log.Warn(r.Context(), "product code does not match required pattern", "expected_pattern", "PROD###", "code", code)
-		api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidProductCode.Error())
-		return
-	}
-
-	details, err := h.service.DetailProduct(r.Context(), code)
+	details, err := h.service.DetailProduct(r.Context(), p.Code)
 	if err != nil {
 		if errors.Is(err, errorsapi.ErrProductNotFound) {
 			api.ErrorResponse(w, r, http.StatusNotFound, err.Error())
 			return
 		}
-		h.log.Error(r.Context(), "retrieve product detail failed", "err", err)
+		h.log.Error(r.Context(), "retrieve product detail failed",
+			"err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
