@@ -56,12 +56,13 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.StripSlashes)
 
 	// Custom logger
 	r.Use(logs.Middleware)
 
 	// Routes
-	r.Get("/catalog", catalogHandler.GetProducts)
+	r.Mount("/catalog", catalogapi.Routes(catalogHandler))
 
 	// HTTP server
 	srv := &http.Server{

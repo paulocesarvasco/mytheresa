@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
@@ -10,21 +11,22 @@ import (
 )
 
 type ProductStore struct {
-	db *gorm.DB
+	db  *gorm.DB
+	log logs.ApiLogger
 }
 
 func New(db *gorm.DB) *ProductStore {
 	return &ProductStore{
-		db: db,
+		db:  db,
+		log: logs.Logger(),
 	}
 }
-func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {
-	log := logs.NewLogger()
+func (ps *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {
 
 	var products []Product
 	var total int64
 
-	countQuery := r.db.WithContext(ctx).Model(&Product{})
+	countQuery := ps.db.WithContext(ctx).Model(&Product{})
 
 	if categoryCode != "" {
 		countQuery = countQuery.
@@ -36,12 +38,12 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
-		log.Error(ctx, "count", "error", err)
+		ps.log.Error(ctx, "repository error counting products", "error", err)
 		return nil, 0, errorsapi.ErrRepositoryCountProducts
 	}
 
-	selectQuery := r.db.WithContext(ctx).
-		Order("products.id ASC").
+	selectQuery := ps.db.WithContext(ctx).
+		Order("products.price DESC").
 		Limit(limit).
 		Offset(offset).
 		Preload("Category").
@@ -57,9 +59,29 @@ func (r *ProductStore) ListProducts(ctx context.Context, limit, offset int, cate
 	}
 
 	if err := selectQuery.Find(&products).Error; err != nil {
-		log.Error(ctx, "select", "error", err)
+		ps.log.Error(ctx, "repository error fetching products", "error", err)
 		return nil, 0, errorsapi.ErrRepositoryFetchProducts
 	}
 
 	return products, total, nil
+}
+
+func (ps *ProductStore) GetByCode(ctx context.Context, code string) (*Product, error) {
+	var product Product
+
+	err := ps.db.WithContext(ctx).
+		Preload("Category").
+		Preload("Variants").
+		Where("code = ?", code).
+		First(&product).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errorsapi.ErrProductNotFound
+		}
+		ps.log.Error(ctx, "repository error fetching product details", "error", err)
+		return nil, errorsapi.ErrRepositoryFetchProduct
+	}
+
+	return &product, nil
 }

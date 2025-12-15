@@ -2,8 +2,8 @@ package catalogapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/mytheresa/go-hiring-challenge/internal/api"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
@@ -14,71 +14,49 @@ import (
 
 type Service interface {
 	ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (catalog.ProductPage, error)
+	DetailProduct(ctx context.Context, code string) (catalog.ProductView, error)
 }
 
 type Handler struct {
 	service Service
+	log     logs.ApiLogger
 }
 
 func New(s Service) *Handler {
 	return &Handler{
 		service: s,
+		log:     logs.Logger(),
 	}
 }
 
 func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	log := logs.NewLogger()
+	p := getQueryParams(r)
 
-	queryParameters := r.URL.Query()
-
-	limit := 10
-	if v := queryParameters.Get("limit"); v != "" {
-		parsed, err := strconv.Atoi(v)
-		if err != nil || parsed < 1 {
-			log.Error(r.Context(), "invalid limit parameter", "error", err, "limit", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
-			return
-		}
-		if parsed > 100 {
-			parsed = 100
-		}
-		limit = parsed
-	}
-
-	offset := 0
-	if v := queryParameters.Get("offset"); v != "" {
-		parsed, err := strconv.Atoi(v)
-		if err != nil || parsed < 0 {
-			log.Error(r.Context(), "invalid offset parameter", "error", err, "offset", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
-			return
-		}
-		offset = parsed
-	}
-
-	categoryCode := ""
-	if v := queryParameters.Get("category_code"); v != "" {
-		// TODO: validate input
-		categoryCode = v
-	}
-
-	var maxPrice *decimal.Decimal
-	if v := queryParameters.Get("max_price"); v != "" {
-		parsed, err := decimal.NewFromString(v)
-		if err != nil || !parsed.GreaterThan(decimal.Zero) {
-			log.Error(r.Context(), "invalid max_price parameter", "error", err, "max_price", v)
-			api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
-			return
-		}
-		maxPrice = &parsed
-	}
-
-	products, err := h.service.ListProducts(r.Context(), limit, offset, categoryCode, maxPrice)
+	products, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
 	if err != nil {
-		log.Error(r.Context(), "list products failed", "err", err)
+		h.log.Error(r.Context(), "list products failed",
+			"err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	api.OKResponse(w, r, products)
+}
+
+func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
+	p := getPathParams(r)
+
+	details, err := h.service.DetailProduct(r.Context(), p.Code)
+	if err != nil {
+		if errors.Is(err, errorsapi.ErrProductNotFound) {
+			api.ErrorResponse(w, r, http.StatusNotFound, err.Error())
+			return
+		}
+		h.log.Error(r.Context(), "retrieve product detail failed",
+			"err", err)
+		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	api.OKResponse(w, r, details)
 }

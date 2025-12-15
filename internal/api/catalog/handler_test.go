@@ -128,10 +128,12 @@ func TestGetProducts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewFakeService(tt.fakeProducts, tt.fakeError)
+			s := NewFakeService()
+			s.SetListProductsResponse(tt.fakeProducts, tt.fakeError)
 			h := New(s)
+			r := Routes(h)
 
-			ts := httptest.NewServer(http.HandlerFunc(h.GetProducts))
+			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			u, err := url.Parse(ts.URL)
@@ -144,6 +146,77 @@ func TestGetProducts(t *testing.T) {
 			u.RawQuery = q.Encode()
 
 			res, err := ts.Client().Get(u.String())
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			rawBody, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+			assert.Contains(t, res.Header.Get("Content-Type"), tt.expectedCT)
+
+			rawExpectedBody, err := json.Marshal(tt.expectedBody)
+			require.NoError(t, err)
+
+			assert.JSONEq(t, string(rawExpectedBody), string(rawBody))
+		})
+	}
+}
+
+func TestGetDetailProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		productCode    string
+		fakeDetails    catalog.ProductView
+		fakeError      error
+		expectedStatus int
+		expectedCT     string
+		expectedBody   any
+	}{
+		{
+			name:           "retrieve product details ok",
+			productCode:    "PROD001",
+			fakeDetails:    catalog.ProductView{Code: "PROD001"},
+			expectedStatus: http.StatusOK,
+			expectedCT:     "application/json",
+			expectedBody:   catalog.ProductView{Code: "PROD001"},
+		},
+		{
+			name:           "invalid product code",
+			productCode:    "PROD00A",
+			expectedStatus: http.StatusBadRequest,
+			expectedCT:     "application/json",
+			expectedBody:   map[string]any{"error": errorsapi.ErrInvalidProductCode.Error()},
+		},
+		{
+			name:           "product code not found",
+			productCode:    "PROD001",
+			fakeError:      errorsapi.ErrProductNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedCT:     "application/json",
+			expectedBody:   map[string]any{"error": errorsapi.ErrProductNotFound.Error()},
+		},
+		{
+			name:           "catalog service error",
+			productCode:    "PROD001",
+			fakeError:      errorsapi.ErrRepositoryFetchProduct,
+			expectedStatus: http.StatusInternalServerError,
+			expectedCT:     "application/json",
+			expectedBody:   map[string]any{"error": errorsapi.ErrRepositoryFetchProduct.Error()},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewFakeService()
+			s.SetDetailProductResponse(tt.fakeDetails, tt.fakeError)
+			h := New(s)
+			r := Routes(h)
+
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			res, err := ts.Client().Get(ts.URL + "/" + tt.productCode)
 			require.NoError(t, err)
 			defer res.Body.Close()
 

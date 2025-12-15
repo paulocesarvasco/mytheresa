@@ -3,31 +3,25 @@ package catalog
 import (
 	"context"
 
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/mytheresa/go-hiring-challenge/internal/repository"
 	"github.com/shopspring/decimal"
 )
 
 type ProductStore interface {
 	ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]repository.Product, int64, error)
-}
-
-type ProductPage struct {
-	Products []ProductView `json:"products"`
-	Total    int64         `json:"total"`
-}
-
-type ProductView struct {
-	Category string  `json:"category_code"`
-	Code     string  `json:"code"`
-	Price    float64 `json:"price"`
+	GetByCode(ctx context.Context, code string) (*repository.Product, error)
 }
 
 type Service struct {
+	log   logs.ApiLogger
 	store ProductStore
 }
 
 func New(store ProductStore) *Service {
-	return &Service{store: store}
+	return &Service{
+		log:   logs.Logger(),
+		store: store}
 }
 
 func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (ProductPage, error) {
@@ -47,4 +41,23 @@ func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryC
 
 	// TODO: handle cases without results
 	return ProductPage{Products: products, Total: total}, nil
+}
+
+func (s *Service) DetailProduct(ctx context.Context, code string) (ProductView, error) {
+	product, err := s.store.GetByCode(ctx, code)
+	if err != nil {
+		return ProductView{}, err
+	}
+
+	variants := make([]VariantView, len(product.Variants))
+	for i, v := range product.Variants {
+		variants[i] = toVariantView(v, product.Price.InexactFloat64())
+	}
+
+	return ProductView{
+		Category: product.Category.Code,
+		Code:     product.Code,
+		Price:    product.Price.InexactFloat64(),
+		Variants: variants,
+	}, nil
 }

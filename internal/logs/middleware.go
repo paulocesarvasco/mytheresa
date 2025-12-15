@@ -45,7 +45,7 @@ func Middleware(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 		)
 
-		ctx := Into(r.Context(), l)
+		ctx := into(r.Context(), l)
 		r = r.WithContext(ctx)
 
 		start := time.Now()
