@@ -2,6 +2,7 @@ package catalogapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 
 type Service interface {
 	ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (catalog.ProductPage, error)
+	DetailProduct(ctx context.Context, code string) (catalog.ProductView, error)
 }
 
 type Handler struct {
@@ -77,7 +79,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := h.service.ListProducts(r.Context(), limit, offset, categoryCode, maxPrice)
 	if err != nil {
-		h.log.Warn(r.Context(), "list products failed", "err", err)
+		h.log.Error(r.Context(), "list products failed", "err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -93,4 +95,17 @@ func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
 		api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidProductCode.Error())
 		return
 	}
+
+	details, err := h.service.DetailProduct(r.Context(), code)
+	if err != nil {
+		if errors.Is(err, errorsapi.ErrProductNotFound) {
+			api.ErrorResponse(w, r, http.StatusNotFound, err.Error())
+			return
+		}
+		h.log.Error(r.Context(), "retrieve product detail failed", "err", err)
+		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	api.OKResponse(w, r, details)
 }

@@ -11,4 +11,7 @@ var (
 
 	ErrRepositoryCountProducts = errors.New("failed to count products")
 	ErrRepositoryFetchProducts = errors.New("failed to fetch products")
+
+	ErrProductNotFound        = errors.New("product not found")
+	ErrRepositoryFetchProduct = errors.New("failed to fetch product")
 )
