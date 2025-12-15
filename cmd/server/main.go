@@ -17,7 +17,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
+	categoriesapi "github.com/mytheresa/go-hiring-challenge/internal/api/categories"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
+	"github.com/mytheresa/go-hiring-challenge/internal/categories"
 	"github.com/mytheresa/go-hiring-challenge/internal/database"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/mytheresa/go-hiring-challenge/internal/repository"
@@ -45,9 +47,13 @@ func main() {
 	defer close()
 
 	// Initialize dependencies
-	prodRepo := repository.New(db)
-	catalogService := catalog.New(prodRepo)
+	productStore := repository.NewProductStore(db)
+	catalogService := catalog.New(productStore)
 	catalogHandler := catalogapi.New(catalogService)
+
+	categoriesStore := repository.NewCategoryStore(db)
+	categoriesService := categories.New(categoriesStore)
+	categoriesHandler := categoriesapi.New(categoriesService)
 
 	// Router
 	r := chi.NewRouter()
@@ -63,6 +69,7 @@ func main() {
 
 	// Routes
 	r.Mount("/catalog", catalogapi.Routes(catalogHandler))
+	r.Mount("/categories", categoriesapi.Routes(categoriesHandler))
 
 	// HTTP server
 	srv := &http.Server{
