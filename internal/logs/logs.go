@@ -61,6 +61,9 @@ func CurrentLevel() slog.Level {
 }
 
 func Logger() ApiLogger {
+	if defaultLogger.logger == nil {
+		Init(slog.LevelInfo)
+	}
 	return &defaultLogger
 }
 

@@ -43,7 +43,7 @@ func (ps *ProductStore) ListProducts(ctx context.Context, limit, offset int, cat
 	}
 
 	selectQuery := ps.db.WithContext(ctx).
-		Order("products.id ASC").
+		Order("products.price DESC").
 		Limit(limit).
 		Offset(offset).
 		Preload("Category").
