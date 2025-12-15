@@ -12,14 +12,13 @@ import (
 
 type ProductStore struct {
 	db  *gorm.DB
-	log *logs.CustomLogger
+	log logs.ApiLogger
 }
 
 func New(db *gorm.DB) *ProductStore {
-	log := logs.NewLogger()
 	return &ProductStore{
 		db:  db,
-		log: log,
+		log: logs.Logger(),
 	}
 }
 func (ps *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {

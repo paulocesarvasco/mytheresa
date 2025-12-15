@@ -21,14 +21,13 @@ type Service interface {
 
 type Handler struct {
 	service Service
-	log     *logs.CustomLogger
+	log     logs.ApiLogger
 }
 
 func New(s Service) *Handler {
-	logger := logs.NewLogger()
 	return &Handler{
 		service: s,
-		log:     logger,
+		log:     logs.Logger(),
 	}
 }
 

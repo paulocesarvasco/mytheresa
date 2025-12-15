@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/mytheresa/go-hiring-challenge/internal/repository"
 	"github.com/shopspring/decimal"
 )
@@ -13,11 +14,14 @@ type ProductStore interface {
 }
 
 type Service struct {
+	log   logs.ApiLogger
 	store ProductStore
 }
 
 func New(store ProductStore) *Service {
-	return &Service{store: store}
+	return &Service{
+		log:   logs.Logger(),
+		store: store}
 }
 
 func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (ProductPage, error) {

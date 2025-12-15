@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,12 +11,16 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/mytheresa/go-hiring-challenge/internal/database"
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 )
 
 func main() {
+	log := logs.Init(slog.LevelInfo)
+
 	// Load environment variables from .env file
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+		log.Error(context.Background(), "Error loading .env file", "error", err)
+		return
 	}
 
 	// Initialize database connection
@@ -30,7 +35,8 @@ func main() {
 	dir := os.Getenv("POSTGRES_SQL_DIR")
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.Fatalf("reading directory failed: %v", err)
+		log.Error(context.Background(), "reading directory failed", "error", err)
+		return
 	}
 
 	// Filter and sort .sql files
@@ -49,15 +55,16 @@ func main() {
 
 		content, err := os.ReadFile(path)
 		if err != nil {
-			log.Printf("reading file %s failed: %v", file.Name(), err)
+			log.Error(context.Background(), "reading file failed", "file", file.Name(), "error", err)
+			return
 		}
 
 		sql := string(content)
 		if err := db.Exec(sql).Error; err != nil {
-			log.Printf("executing %s failed: %v", file.Name(), err)
+			log.Error(context.Background(), "migration execution failed", "file", file.Name(), "error", err)
 			return
 		}
 
-		log.Printf("Executed %s successfully\n", file.Name())
+		log.Info(context.Background(), "executed successfully", "file", file.Name())
 	}
 }
