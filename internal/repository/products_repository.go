@@ -15,7 +15,7 @@ type ProductStore struct {
 	log logs.ApiLogger
 }
 
-func New(db *gorm.DB) *ProductStore {
+func NewProductStore(db *gorm.DB) *ProductStore {
 	return &ProductStore{
 		db:  db,
 		log: logs.Logger(),

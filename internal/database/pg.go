@@ -19,6 +19,7 @@ func New(user, password, dbname, port string) (db *gorm.DB, close func() error) 
 		Logger: logger.New(log, logger.Config{
 			LogLevel: logger.LogLevel(logs.CurrentLevel()),
 		}),
+		TranslateError: true,
 	})
 	if err != nil {
 		log.Error(context.Background(), "failed to connect database", "error", err)

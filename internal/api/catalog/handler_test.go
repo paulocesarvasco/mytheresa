@@ -51,18 +51,12 @@ func TestGetProducts(t *testing.T) {
 		},
 		{
 			name: "invalid limit parameter",
-			fakeProducts: catalog.ProductPage{
-				Total: 1,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-				},
-			},
 			queryParams: map[string]string{
 				"limit": "0x01",
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedCT:     "application/json",
-			expectedBody:   map[string]any{"error": errorsapi.ErrCatalogInvalidLimit.Error()},
+			expectedBody:   map[string]any{"error": errorsapi.ErrInvalidLimitParam.Error()},
 		},
 		{
 			name: "max limit parameter",
@@ -88,33 +82,21 @@ func TestGetProducts(t *testing.T) {
 		},
 		{
 			name: "negative offset",
-			fakeProducts: catalog.ProductPage{
-				Total: 1,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-				},
-			},
 			queryParams: map[string]string{
 				"offset": "-1",
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedCT:     "application/json",
-			expectedBody:   map[string]any{"error": errorsapi.ErrCatalogInvalidOffset.Error()},
+			expectedBody:   map[string]any{"error": errorsapi.ErrInvalidOffsetParam.Error()},
 		},
 		{
 			name: "invalid max price",
-			fakeProducts: catalog.ProductPage{
-				Total: 1,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-				},
-			},
 			queryParams: map[string]string{
 				"max_price": "0.00",
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedCT:     "application/json",
-			expectedBody:   map[string]any{"error": errorsapi.ErrCatalogInvalidMaxPrice.Error()},
+			expectedBody:   map[string]any{"error": errorsapi.ErrInvalidMaxPriceParam.Error()},
 		},
 		{
 			name:           "catalog service error",
