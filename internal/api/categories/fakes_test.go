@@ -9,6 +9,9 @@ import (
 type fakeService struct {
 	listCategoriesResp categories.CategoryPage
 	listCategoriesErr  error
+
+	createCategoryResp categories.CategoryView
+	createCategoryErr  error
 }
 
 func NewFakeService() *fakeService {
@@ -20,10 +23,15 @@ func (f *fakeService) SetListCategoriesResponse(categories categories.CategoryPa
 	f.listCategoriesErr = err
 }
 
+func (f *fakeService) SetCreateCategoryResponse(category categories.CategoryView, err error) {
+	f.createCategoryResp = category
+	f.createCategoryErr = err
+}
+
 func (f *fakeService) ListCategories(ctx context.Context, limit, offset int, categoryCode string) (categories.CategoryPage, error) {
 	return f.listCategoriesResp, f.listCategoriesErr
 }
 
 func (f *fakeService) CreateCategory(ctx context.Context, code string, name string) (categories.CategoryView, error) {
-	return categories.CategoryView{}, nil
+	return f.createCategoryResp, f.createCategoryErr
 }
