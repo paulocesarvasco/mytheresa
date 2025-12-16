@@ -23,3 +23,7 @@ func (f *fakeService) SetListCategoriesResponse(categories categories.CategoryPa
 func (f *fakeService) ListCategories(ctx context.Context, limit, offset int, categoryCode string) (categories.CategoryPage, error) {
 	return f.listCategoriesResp, f.listCategoriesErr
 }
+
+func (f *fakeService) CreateCategory(ctx context.Context, code string, name string) (categories.CategoryView, error) {
+	return categories.CategoryView{}, nil
+}

@@ -38,3 +38,8 @@ func (s *Service) ListCategories(ctx context.Context, limit, offset int, categor
 
 	return CategoryPage{Categories: categories, Total: total}, nil
 }
+
+func (s *Service) CreateCategory(ctx context.Context, code string, name string) (CategoryView, error) {
+	s.log.Debug(ctx, "create category", "code", code, "name", name)
+	return CategoryView{}, nil
+}

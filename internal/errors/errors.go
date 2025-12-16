@@ -6,6 +6,9 @@ var (
 	ErrInvalidLimitParam    = errors.New("invalid limit parameter")
 	ErrInvalidOffsetParam   = errors.New("invalid offset parameter")
 	ErrInvalidMaxPriceParam = errors.New("invalid max_price parameter")
+	ErrInvalidJSONBody      = errors.New("invalid json body")
+	ErrInvalidRequestSchema = errors.New("invalid request schema")
+	ErrInvalidContentType   = errors.New("content type must be application/json")
 
 	ErrMissingRequestParams = errors.New("request parameters not found in context")
 
