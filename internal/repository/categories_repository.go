@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
@@ -52,4 +53,26 @@ func (cs *CategoryStore) ListCategories(ctx context.Context, limit, offset int, 
 	}
 
 	return categories, total, nil
+}
+
+func (cs *CategoryStore) CreateCategory(ctx context.Context, code string, name string) (Category, error) {
+	category := Category{
+		Code: code,
+		Name: name,
+	}
+
+	err := cs.db.WithContext(ctx).
+		Create(&category).
+		Error
+
+	if err != nil {
+		cs.log.Error(ctx, "create category failed",
+			"err", err)
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return Category{}, errorsapi.ErrRepositoryCategoryAlreadyExists
+		}
+		return Category{}, errorsapi.ErrRepositoryCreateCategory
+	}
+
+	return category, nil
 }

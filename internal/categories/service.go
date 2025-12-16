@@ -9,6 +9,7 @@ import (
 
 type CategoriesStore interface {
 	ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]repository.Category, int64, error)
+	CreateCategory(ctx context.Context, code string, name string) (repository.Category, error)
 }
 
 type Service struct {
@@ -40,6 +41,9 @@ func (s *Service) ListCategories(ctx context.Context, limit, offset int, categor
 }
 
 func (s *Service) CreateCategory(ctx context.Context, code string, name string) (CategoryView, error) {
-	s.log.Debug(ctx, "create category", "code", code, "name", name)
-	return CategoryView{}, nil
+	newCategory, err := s.store.CreateCategory(ctx, code, name)
+	if err != nil {
+		return CategoryView{}, err
+	}
+	return CategoryView{Code: newCategory.Code, Name: newCategory.Name}, nil
 }

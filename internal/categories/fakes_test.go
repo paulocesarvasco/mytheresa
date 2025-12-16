@@ -25,3 +25,7 @@ func (f *fakeStore) SetListCategoriesResponse(categories []repository.Category, 
 func (f *fakeStore) ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]repository.Category, int64, error) {
 	return f.listCategoriesResp, f.listTotal, f.listProductsErr
 }
+
+func (f *fakeStore) CreateCategory(ctx context.Context, code string, name string) (repository.Category, error) {
+	return repository.Category{}, nil
+}

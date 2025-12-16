@@ -2,11 +2,13 @@ package categoriesapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/internal/api"
 	"github.com/mytheresa/go-hiring-challenge/internal/api/params"
 	"github.com/mytheresa/go-hiring-challenge/internal/categories"
+	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 	"github.com/mytheresa/go-hiring-challenge/internal/payloads"
 )
@@ -51,11 +53,14 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.service.CreateCategory(r.Context(), req.Code, req.Name)
 	if err != nil {
+		if errors.Is(err, errorsapi.ErrRepositoryCategoryAlreadyExists) {
+			api.ErrorResponse(w, r, http.StatusConflict, err.Error())
+			return
+		}
 		h.log.Error(r.Context(), "create category failed", "err", err, "code", req.Code)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	// TODO: implement support to different status codes
-	api.OKResponse(w, r, created)
+	api.OKResponseWithStatus(w, r, http.StatusCreated, created)
 }

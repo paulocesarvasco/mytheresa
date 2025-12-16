@@ -7,7 +7,11 @@ import (
 )
 
 func OKResponse(w http.ResponseWriter, r *http.Request, data any) {
-	render.Status(r, http.StatusOK)
+	OKResponseWithStatus(w, r, http.StatusOK, data)
+}
+
+func OKResponseWithStatus(w http.ResponseWriter, r *http.Request, status int, data any) {
+	render.Status(r, status)
 	render.SetContentType(render.ContentTypeJSON)
 	render.JSON(w, r, data)
 }
