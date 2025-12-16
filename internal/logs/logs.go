@@ -68,7 +68,7 @@ func Logger() ApiLogger {
 }
 
 // Into attaches a logger to the context.
-func into(ctx context.Context, l *slog.Logger) context.Context {
+func Into(ctx context.Context, l *slog.Logger) context.Context {
 	if l == nil {
 		l = defaultLogger.logger
 	}

@@ -18,6 +18,7 @@ import (
 
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
 	categoriesapi "github.com/mytheresa/go-hiring-challenge/internal/api/categories"
+	"github.com/mytheresa/go-hiring-challenge/internal/api/middlewares"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	"github.com/mytheresa/go-hiring-challenge/internal/categories"
 	"github.com/mytheresa/go-hiring-challenge/internal/database"
@@ -65,7 +66,7 @@ func main() {
 	r.Use(middleware.StripSlashes)
 
 	// Custom logger
-	r.Use(logs.Middleware)
+	r.Use(middlewares.RequestLogger)
 
 	// Routes
 	r.Mount("/catalog", catalogapi.Routes(catalogHandler))

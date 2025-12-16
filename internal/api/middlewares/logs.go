@@ -1,4 +1,4 @@
-package logs
+package middlewares
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 )
 
 type statsWriter struct {
@@ -30,7 +31,7 @@ func (w *statsWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func Middleware(next http.Handler) http.Handler {
+func RequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		sw := &statsWriter{
@@ -45,7 +46,7 @@ func Middleware(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 		)
 
-		ctx := into(r.Context(), l)
+		ctx := logs.Into(r.Context(), l)
 		r = r.WithContext(ctx)
 
 		start := time.Now()
