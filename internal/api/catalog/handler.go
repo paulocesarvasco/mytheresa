@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/internal/api"
+	"github.com/mytheresa/go-hiring-challenge/internal/api/params"
 	"github.com/mytheresa/go-hiring-challenge/internal/catalog"
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
@@ -30,11 +31,11 @@ func New(s Service) *Handler {
 }
 
 func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	p := getQueryParams(r)
+	p := params.QueryParamsFromContext(r.Context())
 
 	products, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
 	if err != nil {
-		h.log.Error(r.Context(), "list products failed",
+		h.log.Error(r.Context(), "get products list failed",
 			"err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
@@ -44,7 +45,11 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
-	p := getPathParams(r)
+	p, ok := params.PathParamsFromContext(r.Context())
+	if !ok {
+		api.ErrorResponse(w, r, http.StatusInternalServerError, errorsapi.ErrCatalogInvalidContextState.Error())
+		return
+	}
 
 	details, err := h.service.DetailProduct(r.Context(), p.Code)
 	if err != nil {

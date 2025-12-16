@@ -3,9 +3,10 @@ package errorsapi
 import "errors"
 
 var (
-	ErrCatalogInvalidLimit    = errors.New("invalid limit parameter")
-	ErrCatalogInvalidOffset   = errors.New("invalid offset parameter")
-	ErrCatalogInvalidMaxPrice = errors.New("invalid max_price parameter")
+	ErrCatalogInvalidLimit        = errors.New("invalid limit parameter")
+	ErrCatalogInvalidOffset       = errors.New("invalid offset parameter")
+	ErrCatalogInvalidMaxPrice     = errors.New("invalid max_price parameter")
+	ErrCatalogInvalidContextState = errors.New("invalid request context state")
 
 	ErrInvalidProductCode = errors.New("invalid product code")
 
