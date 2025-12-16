@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetProducts(t *testing.T) {
+func TestListProducts(t *testing.T) {
 	tests := []struct {
 		name               string
 		fakeCategories     []repository.Category
@@ -46,6 +46,42 @@ func TestGetProducts(t *testing.T) {
 			products, err := service.ListCategories(t.Context(), 10, 0, "FOO")
 
 			assert.Equal(t, tt.expectedCategories, products)
+			assert.Equal(t, tt.expectedError, err)
+		})
+	}
+}
+
+func TestCreateCategory(t *testing.T) {
+	tests := []struct {
+		name             string
+		categoryName     string
+		categoryCode     string
+		fakeCategory     repository.Category
+		fakeError        error
+		expectedCategory CategoryView
+		expectedError    error
+	}{
+		{
+			name:             "create category succeeds",
+			fakeCategory:     repository.Category{ID: 1, Code: "FOO", Name: "foo"},
+			expectedCategory: CategoryView{Code: "FOO", Name: "foo"},
+		},
+		{
+			name:          "create category fails on repository error",
+			fakeError:     errorsapi.ErrRepositoryCreateCategory,
+			expectedError: errorsapi.ErrRepositoryCreateCategory,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewFakeStore()
+			store.SetCreateCategoryResponse(tt.fakeCategory, tt.fakeError)
+
+			service := New(store)
+			newCategory, err := service.CreateCategory(t.Context(), tt.categoryCode, tt.categoryName)
+
+			assert.Equal(t, tt.expectedCategory, newCategory)
 			assert.Equal(t, tt.expectedError, err)
 		})
 	}
