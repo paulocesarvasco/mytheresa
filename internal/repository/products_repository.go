@@ -46,8 +46,7 @@ func (ps *ProductStore) ListProducts(ctx context.Context, limit, offset int, cat
 		Order("products.price DESC").
 		Limit(limit).
 		Offset(offset).
-		Preload("Category").
-		Preload("Variants")
+		Preload("Category")
 
 	if categoryCode != "" {
 		selectQuery = selectQuery.Joins("Category").

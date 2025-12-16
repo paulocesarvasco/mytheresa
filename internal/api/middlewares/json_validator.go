@@ -33,11 +33,6 @@ func ValidateJSON[T any](log logs.ApiLogger) func(http.Handler) http.Handler {
 				return
 			}
 
-			if dec.More() {
-				api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidJSONBody.Error())
-				return
-			}
-
 			v := validator.New()
 			if err := v.Struct(payload); err != nil {
 				log.Warn(r.Context(), "schema validation failed", "err", err)

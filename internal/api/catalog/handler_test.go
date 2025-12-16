@@ -2,6 +2,7 @@ package catalogapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -198,7 +199,7 @@ func TestGetDetailProduct(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			res, err := ts.Client().Get(ts.URL + "/" + tt.productCode)
+			res, err := ts.Client().Get(fmt.Sprintf("%s/%s", ts.URL, tt.productCode))
 			require.NoError(t, err)
 			defer res.Body.Close()
 
