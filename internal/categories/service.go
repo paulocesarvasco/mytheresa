@@ -8,7 +8,7 @@ import (
 )
 
 type CategoriesStore interface {
-	ListCategories(ctx context.Context) ([]repository.Category, int64, error)
+	ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]repository.Category, int64, error)
 }
 
 type Service struct {
@@ -22,8 +22,8 @@ func New(store CategoriesStore) *Service {
 		store: store}
 }
 
-func (s *Service) ListCategories(ctx context.Context) (CategoryPage, error) {
-	res, total, err := s.store.ListCategories(ctx)
+func (s *Service) ListCategories(ctx context.Context, limit, offset int, categoryCode string) (CategoryPage, error) {
+	res, total, err := s.store.ListCategories(ctx, limit, offset, categoryCode)
 	if err != nil {
 		return CategoryPage{}, err
 	}

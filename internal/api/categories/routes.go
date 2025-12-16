@@ -1,11 +1,15 @@
 package categoriesapi
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/mytheresa/go-hiring-challenge/internal/api/middlewares"
+)
 
 func Routes(h *Handler) chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", h.GetCategories)
+	r.With(middlewares.ParseQueryParameters(h.log)).
+		Get("/", h.GetCategories)
 
 	return r
 }

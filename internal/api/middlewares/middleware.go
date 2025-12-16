@@ -28,7 +28,7 @@ func ParseQueryParameters(log logs.ApiLogger) func(http.Handler) http.Handler {
 					log.Warn(r.Context(), "invalid query parameter",
 						"param", "limit", "value", v, "err", err,
 					)
-					api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidLimit.Error())
+					api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidLimitParam.Error())
 					return
 				}
 				if parsed > params.MaxLimit {
@@ -48,7 +48,7 @@ func ParseQueryParameters(log logs.ApiLogger) func(http.Handler) http.Handler {
 					log.Warn(r.Context(), "invalid query parameter",
 						"param", "offset", "value", v, "err", err,
 					)
-					api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidOffset.Error())
+					api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidOffsetParam.Error())
 					return
 				}
 				p.Offset = parsed
@@ -79,7 +79,7 @@ func ParseMaxPrice(log logs.ApiLogger) func(http.Handler) http.Handler {
 				log.Warn(r.Context(), "invalid query parameter",
 					"param", "max_price", "value", v, "err", err,
 				)
-				api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrCatalogInvalidMaxPrice.Error())
+				api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidMaxPriceParam.Error())
 				return
 			}
 

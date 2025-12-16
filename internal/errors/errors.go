@@ -3,10 +3,11 @@ package errorsapi
 import "errors"
 
 var (
-	ErrCatalogInvalidLimit        = errors.New("invalid limit parameter")
-	ErrCatalogInvalidOffset       = errors.New("invalid offset parameter")
-	ErrCatalogInvalidMaxPrice     = errors.New("invalid max_price parameter")
-	ErrCatalogInvalidContextState = errors.New("invalid request context state")
+	ErrInvalidLimitParam    = errors.New("invalid limit parameter")
+	ErrInvalidOffsetParam   = errors.New("invalid offset parameter")
+	ErrInvalidMaxPriceParam = errors.New("invalid max_price parameter")
+
+	ErrMissingRequestParams = errors.New("request parameters not found in context")
 
 	ErrInvalidProductCode = errors.New("invalid product code")
 

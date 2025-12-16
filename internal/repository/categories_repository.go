@@ -19,12 +19,16 @@ func NewCategoryStore(db *gorm.DB) *CategoryStore {
 		log: logs.Logger(),
 	}
 }
-func (cs *CategoryStore) ListCategories(ctx context.Context) ([]Category, int64, error) {
+func (cs *CategoryStore) ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]Category, int64, error) {
 
 	var categories []Category
 	var total int64
 
 	countQuery := cs.db.WithContext(ctx).Model(&Category{})
+
+	if categoryCode != "" {
+		countQuery = countQuery.Where("code = ?", categoryCode)
+	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
 		cs.log.Error(ctx, "repository error counting categories",
@@ -32,7 +36,14 @@ func (cs *CategoryStore) ListCategories(ctx context.Context) ([]Category, int64,
 		return nil, 0, errorsapi.ErrRepositoryCountCategories
 	}
 
-	selectQuery := cs.db.WithContext(ctx)
+	selectQuery := cs.db.WithContext(ctx).
+		Order("categories.code ASC").
+		Limit(limit).
+		Offset(offset)
+
+	if categoryCode != "" {
+		selectQuery = selectQuery.Where("code = ?", categoryCode)
+	}
 
 	if err := selectQuery.Find(&categories).Error; err != nil {
 		cs.log.Error(ctx, "repository error fetching categories",

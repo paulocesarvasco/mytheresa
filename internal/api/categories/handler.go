@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/internal/api"
+	"github.com/mytheresa/go-hiring-challenge/internal/api/params"
 	"github.com/mytheresa/go-hiring-challenge/internal/categories"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
 )
 
 type Service interface {
-	ListCategories(ctx context.Context) (categories.CategoryPage, error)
+	ListCategories(ctx context.Context, limit, offset int, categoryCode string) (categories.CategoryPage, error)
 }
 
 type Handler struct {
@@ -26,9 +27,11 @@ func New(s Service) *Handler {
 }
 
 func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
-	products, err := h.service.ListCategories(r.Context())
+	p := params.QueryParamsFromContext(r.Context())
+
+	products, err := h.service.ListCategories(r.Context(), p.Limit, p.Offset, p.CategoryCode)
 	if err != nil {
-		h.log.Error(r.Context(), "list products failed",
+		h.log.Error(r.Context(), "list categories failed",
 			"err", err)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
