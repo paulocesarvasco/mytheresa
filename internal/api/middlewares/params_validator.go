@@ -55,7 +55,7 @@ func ParseQueryParameters(log logs.ApiLogger) func(http.Handler) http.Handler {
 			}
 
 			if v := q.Get("category_code"); v != "" {
-				// TODO: validate format if needed
+				// TODO: validate format
 				p.CategoryCode = v
 			}
 
