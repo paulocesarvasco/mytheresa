@@ -47,7 +47,7 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
 	p, ok := params.PathParamsFromContext(r.Context())
 	if !ok {
-		api.ErrorResponse(w, r, http.StatusInternalServerError, errorsapi.ErrCatalogInvalidContextState.Error())
+		api.ErrorResponse(w, r, http.StatusInternalServerError, errorsapi.ErrMissingRequestParams.Error())
 		return
 	}
 
