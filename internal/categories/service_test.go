@@ -4,30 +4,31 @@ import (
 	"testing"
 
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
-	"github.com/mytheresa/go-hiring-challenge/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestListProducts(t *testing.T) {
 	tests := []struct {
 		name               string
-		fakeCategories     []repository.Category
+		fakeCategories     []Category
 		fakeTotal          int64
 		fakeError          error
-		expectedCategories CategoryPage
+		expectedCategories []Category
+		expectedTotal      int64
 		expectedError      error
 	}{
 		{
 			name: "list categories succeeds",
-			fakeCategories: []repository.Category{
-				{ID: 1, Code: "FOO", Name: "foo"},
-				{ID: 2, Code: "BAR", Name: "bar"},
-			},
-			fakeTotal: 2,
-			expectedCategories: CategoryPage{Categories: []CategoryView{
+			fakeCategories: []Category{
 				{Code: "FOO", Name: "foo"},
 				{Code: "BAR", Name: "bar"},
-			}, Total: 2},
+			},
+			fakeTotal: 2,
+			expectedCategories: []Category{
+				{Code: "FOO", Name: "foo"},
+				{Code: "BAR", Name: "bar"},
+			},
+			expectedTotal: 2,
 		},
 		{
 			name:          "list categories fails on repository error",
@@ -43,9 +44,10 @@ func TestListProducts(t *testing.T) {
 
 			service := New(store)
 
-			products, err := service.ListCategories(t.Context(), 10, 0, "FOO")
+			products, total, err := service.ListCategories(t.Context(), 10, 0, "FOO")
 
 			assert.Equal(t, tt.expectedCategories, products)
+			assert.Equal(t, tt.expectedTotal, total)
 			assert.Equal(t, tt.expectedError, err)
 		})
 	}
@@ -56,15 +58,15 @@ func TestCreateCategory(t *testing.T) {
 		name             string
 		categoryName     string
 		categoryCode     string
-		fakeCategory     repository.Category
+		fakeCategory     Category
 		fakeError        error
-		expectedCategory CategoryView
+		expectedCategory Category
 		expectedError    error
 	}{
 		{
 			name:             "create category succeeds",
-			fakeCategory:     repository.Category{ID: 1, Code: "FOO", Name: "foo"},
-			expectedCategory: CategoryView{Code: "FOO", Name: "foo"},
+			fakeCategory:     Category{Code: "FOO", Name: "foo"},
+			expectedCategory: Category{Code: "FOO", Name: "foo"},
 		},
 		{
 			name:          "create category fails on repository error",

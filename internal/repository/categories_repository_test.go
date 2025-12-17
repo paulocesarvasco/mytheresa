@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/mytheresa/go-hiring-challenge/internal/categories"
 	"github.com/mytheresa/go-hiring-challenge/internal/database/testutil"
 	errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
 )
@@ -18,7 +19,7 @@ func TestListCategories(t *testing.T) {
 		offset             int
 		categoryCode       string
 		timeout            time.Duration
-		expectedCategories []Category
+		expectedCategories []categories.Category
 		expectedTotal      int64
 		expectedError      error
 	}{
@@ -26,10 +27,10 @@ func TestListCategories(t *testing.T) {
 			name:    "retrieve entire categories list",
 			limit:   10,
 			timeout: 60 * time.Second,
-			expectedCategories: []Category{
-				{ID: 3, Code: "ACCESSORIES", Name: "Accessories"},
-				{ID: 1, Code: "CLOTHING", Name: "Clothing"},
-				{ID: 2, Code: "SHOES", Name: "Shoes"},
+			expectedCategories: []categories.Category{
+				{Code: "ACCESSORIES", Name: "Accessories"},
+				{Code: "CLOTHING", Name: "Clothing"},
+				{Code: "SHOES", Name: "Shoes"},
 			},
 			expectedTotal: 3,
 			expectedError: nil,
@@ -38,8 +39,8 @@ func TestListCategories(t *testing.T) {
 			name:    "get 1st category from list",
 			limit:   1,
 			timeout: 60 * time.Second,
-			expectedCategories: []Category{
-				{ID: 3, Code: "ACCESSORIES", Name: "Accessories"},
+			expectedCategories: []categories.Category{
+				{Code: "ACCESSORIES", Name: "Accessories"},
 			},
 			expectedTotal: 3,
 			expectedError: nil,
@@ -49,8 +50,8 @@ func TestListCategories(t *testing.T) {
 			limit:   1,
 			offset:  2,
 			timeout: 60 * time.Second,
-			expectedCategories: []Category{
-				{ID: 2, Code: "SHOES", Name: "Shoes"},
+			expectedCategories: []categories.Category{
+				{Code: "SHOES", Name: "Shoes"},
 			},
 			expectedTotal: 3,
 			expectedError: nil,
@@ -59,9 +60,9 @@ func TestListCategories(t *testing.T) {
 			name:    "retrieve 2 items from list",
 			limit:   2,
 			timeout: 60 * time.Second,
-			expectedCategories: []Category{
-				{ID: 3, Code: "ACCESSORIES", Name: "Accessories"},
-				{ID: 1, Code: "CLOTHING", Name: "Clothing"},
+			expectedCategories: []categories.Category{
+				{Code: "ACCESSORIES", Name: "Accessories"},
+				{Code: "CLOTHING", Name: "Clothing"},
 			},
 			expectedTotal: 3,
 			expectedError: nil,
@@ -71,8 +72,8 @@ func TestListCategories(t *testing.T) {
 			limit:        10,
 			categoryCode: "ACCESSORIES",
 			timeout:      60 * time.Second,
-			expectedCategories: []Category{
-				{ID: 3, Code: "ACCESSORIES", Name: "Accessories"},
+			expectedCategories: []categories.Category{
+				{Code: "ACCESSORIES", Name: "Accessories"},
 			},
 			expectedTotal: 1,
 			expectedError: nil,
@@ -108,7 +109,7 @@ func TestCreateCategory(t *testing.T) {
 		categoryCode     string
 		categoryName     string
 		timeout          time.Duration
-		expectedCategory Category
+		expectedCategory categories.Category
 		expectedError    error
 	}{
 		{
@@ -116,7 +117,7 @@ func TestCreateCategory(t *testing.T) {
 			categoryCode:     "FOO",
 			categoryName:     "foo",
 			timeout:          60 * time.Second,
-			expectedCategory: Category{ID: 4, Code: "FOO", Name: "foo"},
+			expectedCategory: categories.Category{Code: "FOO", Name: "foo"},
 			expectedError:    nil,
 		},
 		{

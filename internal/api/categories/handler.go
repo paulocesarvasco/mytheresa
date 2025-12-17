@@ -14,8 +14,9 @@ import (
 )
 
 type Service interface {
-	ListCategories(ctx context.Context, limit, offset int, categoryCode string) (categories.CategoryPage, error)
-	CreateCategory(ctx context.Context, code string, name string) (categories.CategoryView, error)
+	ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]categories.Category, int64, error)
+	CreateCategory(ctx context.Context, code string, name string) (categories.Category, error)
+	CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) ([]categories.Category, error)
 }
 
 type Handler struct {
@@ -33,7 +34,7 @@ func New(s Service) *Handler {
 func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	p := params.QueryParamsFromContext(r.Context())
 
-	products, err := h.service.ListCategories(r.Context(), p.Limit, p.Offset, p.CategoryCode)
+	res, total, err := h.service.ListCategories(r.Context(), p.Limit, p.Offset, p.CategoryCode)
 	if err != nil {
 		h.log.Error(r.Context(), "list categories failed",
 			"err", err)
@@ -41,7 +42,15 @@ func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.OKResponse(w, r, products)
+	categories := make([]CategoryView, len(res))
+	for i, c := range res {
+		categories[i] = CategoryView{
+			Code: c.Code,
+			Name: c.Name,
+		}
+	}
+
+	api.OKResponse(w, r, CategoryPage{Categories: categories, Total: total})
 }
 
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -51,16 +60,38 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := h.service.CreateCategory(r.Context(), req.Code, req.Name)
+	res := []categories.Category{{}}
+	var err error
+	if len(req) == 1 {
+		res[0], err = h.service.CreateCategory(r.Context(), req[0].Code, req[0].Name)
+	} else {
+		inputs := make([]categories.CreateCategoryInput, len(req))
+		for _, r := range req {
+			inputs = append(inputs, categories.CreateCategoryInput{
+				Code: r.Code,
+				Name: r.Name,
+			})
+		}
+		res, err = h.service.CreateCategories(r.Context(), inputs)
+	}
+
 	if err != nil {
 		if errors.Is(err, errorsapi.ErrRepositoryCategoryAlreadyExists) {
 			api.ErrorResponse(w, r, http.StatusConflict, err.Error())
 			return
 		}
-		h.log.Error(r.Context(), "create category failed", "err", err, "code", req.Code)
+		h.log.Error(r.Context(), "create category failed", "err", err, "code", req)
 		api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	api.OKResponseWithStatus(w, r, http.StatusCreated, created)
+	categories := make([]CategoryView, len(res))
+	for i, c := range res {
+		categories[i] = CategoryView{
+			Code: c.Code,
+			Name: c.Name,
+		}
+	}
+
+	api.OKResponseWithStatus(w, r, http.StatusCreated, categories)
 }

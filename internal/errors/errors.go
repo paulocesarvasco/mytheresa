@@ -9,6 +9,8 @@ var (
 	ErrInvalidJSONBody      = errors.New("invalid json body")
 	ErrInvalidRequestSchema = errors.New("invalid request schema")
 	ErrInvalidContentType   = errors.New("content type must be application/json")
+	ErrEmptyJSONBody        = errors.New("empty body")
+	ErrUnexpectedBodyFormat = errors.New("expected object or array")
 
 	ErrMissingRequestParams = errors.New("request parameters not found in context")
 
