@@ -5,9 +5,9 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 jobs:
 
@@ -26,3 +26,44 @@ jobs:
 
     - name: Test
       run: go test -v -count=1 -race ./...
+
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Run tests (generate coverage.out)
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Generate filtered HTML coverage report
+        run: |
+          grep -vFf .covignore coverage.out > coverage.filtered.out
+          go tool cover -html=coverage.filtered.out -o coverage.html
+          rm -f coverage.filtered.out
+
+      - name: Install exporters (Cobertura + LCOV)
+        run: |
+          go install github.com/boumenot/gocover-cobertura@latest
+          go install github.com/jandelgado/gcov2lcov@latest
+
+      - name: Export Cobertura and LCOV (filtered)
+        run: |
+          grep -vFf .covignore coverage.out > coverage.filtered.out
+          gocover-cobertura < coverage.filtered.out > coverage.xml
+          gcov2lcov -infile coverage.filtered.out -outfile lcov.info
+          rm -f coverage.filtered.out
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.out
+            coverage.html
+            coverage.xml
+            lcov.info
