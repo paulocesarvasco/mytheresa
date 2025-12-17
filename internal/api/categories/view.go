@@ -1,4 +1,4 @@
-package categories
+package categoriesapi
 
 type CategoryPage struct {
 	Categories []CategoryView `json:"categories"`

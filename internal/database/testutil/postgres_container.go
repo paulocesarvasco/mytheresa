@@ -30,7 +30,7 @@ func StartPostgresContainer(t *testing.T, ctx context.Context) (*gorm.DB, func()
 	}
 
 	pg, err := postgres.Run(ctx,
-		"postgres:16-alpine",
+		"postgres:17.5",
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("test"),

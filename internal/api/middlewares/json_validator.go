@@ -22,7 +22,7 @@ func ValidateJSON[T any](log logs.ApiLogger) func(http.Handler) http.Handler {
 				return
 			}
 
-			var payload T
+			var payload params.ListOrObject[T]
 
 			dec := json.NewDecoder(r.Body)
 			dec.DisallowUnknownFields()
@@ -34,13 +34,15 @@ func ValidateJSON[T any](log logs.ApiLogger) func(http.Handler) http.Handler {
 			}
 
 			v := validator.New()
-			if err := v.Struct(payload); err != nil {
-				log.Warn(r.Context(), "schema validation failed", "err", err)
-				api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidRequestSchema.Error())
-				return
+			for i, item := range payload.Items {
+				if err := v.Struct(item); err != nil {
+					log.Warn(r.Context(), "schema validation failed", "index", i, "err", err)
+					api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidRequestSchema.Error())
+					return
+				}
 			}
 
-			ctx := params.WithBody(r.Context(), payload)
+			ctx := params.WithBody(r.Context(), payload.Items)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
