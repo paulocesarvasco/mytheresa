@@ -1,0 +1,934 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>catalog: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/mytheresa/go-hiring-challenge/internal/api/catalog/handler.go (90.5%)</option>
+				
+				<option value="file1">github.com/mytheresa/go-hiring-challenge/internal/api/catalog/routes.go (100.0%)</option>
+				
+				<option value="file2">github.com/mytheresa/go-hiring-challenge/internal/api/categories/handler.go (93.3%)</option>
+				
+				<option value="file3">github.com/mytheresa/go-hiring-challenge/internal/api/categories/routes.go (100.0%)</option>
+				
+				<option value="file4">github.com/mytheresa/go-hiring-challenge/internal/api/middlewares/json_validator.go (100.0%)</option>
+				
+				<option value="file5">github.com/mytheresa/go-hiring-challenge/internal/api/middlewares/params_validator.go (100.0%)</option>
+				
+				<option value="file6">github.com/mytheresa/go-hiring-challenge/internal/api/response.go (100.0%)</option>
+				
+				<option value="file7">github.com/mytheresa/go-hiring-challenge/internal/catalog/mapper.go (100.0%)</option>
+				
+				<option value="file8">github.com/mytheresa/go-hiring-challenge/internal/catalog/service.go (100.0%)</option>
+				
+				<option value="file9">github.com/mytheresa/go-hiring-challenge/internal/categories/service.go (100.0%)</option>
+				
+				<option value="file10">github.com/mytheresa/go-hiring-challenge/internal/repository/categories.go (100.0%)</option>
+				
+				<option value="file11">github.com/mytheresa/go-hiring-challenge/internal/repository/categories_repository.go (94.1%)</option>
+				
+				<option value="file12">github.com/mytheresa/go-hiring-challenge/internal/repository/products.go (100.0%)</option>
+				
+				<option value="file13">github.com/mytheresa/go-hiring-challenge/internal/repository/products_repository.go (92.9%)</option>
+				
+				<option value="file14">github.com/mytheresa/go-hiring-challenge/internal/repository/variants.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package catalogapi
+
+import (
+        "context"
+        "errors"
+        "net/http"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/api"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/params"
+        "github.com/mytheresa/go-hiring-challenge/internal/catalog"
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+        "github.com/shopspring/decimal"
+)
+
+type Service interface {
+        ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (catalog.ProductPage, error)
+        DetailProduct(ctx context.Context, code string) (catalog.ProductView, error)
+}
+
+type Handler struct {
+        service Service
+        log     logs.ApiLogger
+}
+
+func New(s Service) *Handler <span class="cov8" title="1">{
+        return &amp;Handler{
+                service: s,
+                log:     logs.Logger(),
+        }
+}</span>
+
+func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        p := params.QueryParamsFromContext(r.Context())
+
+        products, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
+        if err != nil </span><span class="cov8" title="1">{
+                h.log.Error(r.Context(), "get products list failed",
+                        "err", err)
+                api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+                return
+        }</span>
+
+        <span class="cov8" title="1">api.OKResponse(w, r, products)</span>
+}
+
+func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        p, ok := params.PathParamsFromContext(r.Context())
+        if !ok </span><span class="cov0" title="0">{
+                api.ErrorResponse(w, r, http.StatusInternalServerError, errorsapi.ErrMissingRequestParams.Error())
+                return
+        }</span>
+
+        <span class="cov8" title="1">details, err := h.service.DetailProduct(r.Context(), p.Code)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, errorsapi.ErrProductNotFound) </span><span class="cov8" title="1">{
+                        api.ErrorResponse(w, r, http.StatusNotFound, err.Error())
+                        return
+                }</span>
+                <span class="cov8" title="1">h.log.Error(r.Context(), "retrieve product detail failed",
+                        "err", err)
+                api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+                return</span>
+        }
+
+        <span class="cov8" title="1">api.OKResponse(w, r, details)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package catalogapi
+
+import (
+        "github.com/go-chi/chi/v5"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/middlewares"
+)
+
+func Routes(h *Handler) chi.Router <span class="cov8" title="1">{
+        r := chi.NewRouter()
+
+        r.With(middlewares.ParseQueryParameters(h.log)).
+                With(middlewares.ParseMaxPrice(h.log)).
+                Get("/", h.GetProducts)
+
+        r.With(middlewares.ValidateProductCode(h.log)).
+                Get("/{code}", h.GetDetailProduct)
+
+        return r
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package categoriesapi
+
+import (
+        "context"
+        "errors"
+        "net/http"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/api"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/params"
+        "github.com/mytheresa/go-hiring-challenge/internal/categories"
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+        "github.com/mytheresa/go-hiring-challenge/internal/payloads"
+)
+
+type Service interface {
+        ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]categories.Category, int64, error)
+        CreateCategory(ctx context.Context, code string, name string) error
+        CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) error
+}
+
+type Handler struct {
+        service Service
+        log     logs.ApiLogger
+}
+
+func New(s Service) *Handler <span class="cov8" title="1">{
+        return &amp;Handler{
+                service: s,
+                log:     logs.Logger(),
+        }
+}</span>
+
+func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        p := params.QueryParamsFromContext(r.Context())
+
+        res, total, err := h.service.ListCategories(r.Context(), p.Limit, p.Offset, p.CategoryCode)
+        if err != nil </span><span class="cov8" title="1">{
+                h.log.Error(r.Context(), "list categories failed",
+                        "err", err)
+                api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+                return
+        }</span>
+
+        <span class="cov8" title="1">categories := make([]CategoryView, len(res))
+        for i, c := range res </span><span class="cov8" title="1">{
+                categories[i] = CategoryView{
+                        Code: c.Code,
+                        Name: c.Name,
+                }
+        }</span>
+
+        <span class="cov8" title="1">api.OKResponse(w, r, CategoryPage{Categories: categories, Total: total})</span>
+}
+
+func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        req, ok := params.BodyFromRequest[payloads.CreateCategoryRequest](r)
+        if !ok </span><span class="cov0" title="0">{
+                api.ErrorResponse(w, r, http.StatusInternalServerError, "invalid request state")
+                return
+        }</span>
+
+        <span class="cov8" title="1">var err error
+        if len(req) == 1 </span><span class="cov8" title="1">{
+                err = h.service.CreateCategory(r.Context(), req[0].Code, req[0].Name)
+        }</span> else<span class="cov8" title="1"> {
+                inputs := make([]categories.CreateCategoryInput, len(req))
+                for i, r := range req </span><span class="cov8" title="1">{
+                        inputs[i] = categories.CreateCategoryInput{
+                                Code: r.Code,
+                                Name: r.Name,
+                        }
+                }</span>
+                <span class="cov8" title="1">err = h.service.CreateCategories(r.Context(), inputs)</span>
+        }
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, errorsapi.ErrRepositoryCategoryAlreadyExists) </span><span class="cov8" title="1">{
+                        api.ErrorResponse(w, r, http.StatusConflict, err.Error())
+                        return
+                }</span>
+                <span class="cov8" title="1">h.log.Error(r.Context(), "create category failed", "err", err, "code", req)
+                api.ErrorResponse(w, r, http.StatusInternalServerError, err.Error())
+                return</span>
+        }
+
+        <span class="cov8" title="1">api.OKResponseWithStatus(w, r, http.StatusCreated, req)</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package categoriesapi
+
+import (
+        "github.com/go-chi/chi/v5"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/middlewares"
+        "github.com/mytheresa/go-hiring-challenge/internal/payloads"
+)
+
+func Routes(h *Handler) chi.Router <span class="cov8" title="1">{
+        r := chi.NewRouter()
+
+        r.With(middlewares.ValidateJSON[payloads.CreateCategoryRequest](h.log)).
+                Post("/", h.CreateCategory)
+
+        r.With(middlewares.ParseQueryParameters(h.log)).
+                Get("/", h.GetCategories)
+
+        return r
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package middlewares
+
+import (
+        "encoding/json"
+        "net/http"
+
+        "github.com/go-playground/validator/v10"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/api"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/params"
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+)
+
+func ValidateJSON[T any](log logs.ApiLogger) func(http.Handler) http.Handler <span class="cov8" title="1">{
+        return func(next http.Handler) http.Handler </span><span class="cov8" title="1">{
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                        ct := r.Header.Get("Content-Type")
+                        if !(ct == "application/json") </span><span class="cov8" title="1">{
+                                log.Warn(r.Context(), "invalid content type", "content_type", ct)
+                                api.ErrorResponse(w, r, http.StatusUnsupportedMediaType, errorsapi.ErrInvalidContentType.Error())
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">var payload params.ListOrObject[T]
+
+                        dec := json.NewDecoder(r.Body)
+                        dec.DisallowUnknownFields()
+
+                        if err := dec.Decode(&amp;payload); err != nil </span><span class="cov8" title="1">{
+                                log.Warn(r.Context(), "invalid json body", "err", err)
+                                api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidJSONBody.Error())
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">v := validator.New()
+                        for i, item := range payload.Items </span><span class="cov8" title="1">{
+                                if err := v.Struct(item); err != nil </span><span class="cov8" title="1">{
+                                        log.Warn(r.Context(), "schema validation failed", "index", i, "err", err)
+                                        api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidRequestSchema.Error())
+                                        return
+                                }</span>
+                        }
+
+                        <span class="cov8" title="1">ctx := params.WithBody(r.Context(), payload.Items)
+                        next.ServeHTTP(w, r.WithContext(ctx))</span>
+                })
+        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package middlewares
+
+import (
+        "net/http"
+        "regexp"
+        "strconv"
+
+        "github.com/go-chi/chi/v5"
+        "github.com/shopspring/decimal"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/api"
+        "github.com/mytheresa/go-hiring-challenge/internal/api/params"
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+)
+
+func ParseQueryParameters(log logs.ApiLogger) func(http.Handler) http.Handler <span class="cov8" title="1">{
+        return func(next http.Handler) http.Handler </span><span class="cov8" title="1">{
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                        q := r.URL.Query()
+
+                        // start from defaults (or previously set params)
+                        p := params.QueryParamsFromContext(r.Context())
+
+                        if v := q.Get("limit"); v != "" </span><span class="cov8" title="1">{
+                                parsed, err := strconv.Atoi(v)
+                                if err != nil || parsed &lt; 1 </span><span class="cov8" title="1">{
+                                        log.Warn(r.Context(), "invalid query parameter",
+                                                "param", "limit", "value", v, "err", err,
+                                        )
+                                        api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidLimitParam.Error())
+                                        return
+                                }</span>
+                                <span class="cov8" title="1">if parsed &gt; params.MaxLimit </span><span class="cov8" title="1">{
+                                        log.Warn(r.Context(),
+                                                "query parameter \"limit\" exceeds maximum allowed value",
+                                                "limit", parsed,
+                                                "max", params.MaxLimit,
+                                        )
+                                        parsed = params.MaxLimit
+                                }</span>
+                                <span class="cov8" title="1">p.Limit = parsed</span>
+                        }
+
+                        <span class="cov8" title="1">if v := q.Get("offset"); v != "" </span><span class="cov8" title="1">{
+                                parsed, err := strconv.Atoi(v)
+                                if err != nil || parsed &lt; 0 </span><span class="cov8" title="1">{
+                                        log.Warn(r.Context(), "invalid query parameter",
+                                                "param", "offset", "value", v, "err", err,
+                                        )
+                                        api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidOffsetParam.Error())
+                                        return
+                                }</span>
+                                <span class="cov8" title="1">p.Offset = parsed</span>
+                        }
+
+                        <span class="cov8" title="1">if v := q.Get("category_code"); v != "" </span><span class="cov8" title="1">{
+                                // TODO: validate format
+                                p.CategoryCode = v
+                        }</span>
+
+                        <span class="cov8" title="1">ctx := params.WithQueryParams(r.Context(), p)
+                        next.ServeHTTP(w, r.WithContext(ctx))</span>
+                })
+        }
+}
+
+func ParseMaxPrice(log logs.ApiLogger) func(http.Handler) http.Handler <span class="cov8" title="1">{
+        return func(next http.Handler) http.Handler </span><span class="cov8" title="1">{
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                        v := r.URL.Query().Get("max_price")
+                        if v == "" </span><span class="cov8" title="1">{
+                                next.ServeHTTP(w, r)
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">parsed, err := decimal.NewFromString(v)
+                        if err != nil || !parsed.GreaterThan(decimal.Zero) </span><span class="cov8" title="1">{
+                                log.Warn(r.Context(), "invalid query parameter",
+                                        "param", "max_price", "value", v, "err", err,
+                                )
+                                api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidMaxPriceParam.Error())
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">p := params.QueryParamsFromContext(r.Context())
+                        p.MaxPrice = &amp;parsed
+
+                        ctx := params.WithQueryParams(r.Context(), p)
+                        next.ServeHTTP(w, r.WithContext(ctx))</span>
+                })
+        }
+}
+
+var productCodeRe = regexp.MustCompile(`^PROD\d{3}$`)
+
+func ValidateProductCode(log logs.ApiLogger) func(http.Handler) http.Handler <span class="cov8" title="1">{
+        return func(next http.Handler) http.Handler </span><span class="cov8" title="1">{
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                        code := chi.URLParam(r, "code")
+
+                        if !productCodeRe.MatchString(code) </span><span class="cov8" title="1">{
+                                log.Warn(
+                                        r.Context(),
+                                        "product code does not match required pattern",
+                                        "expected_pattern", "PROD###",
+                                        "code", code,
+                                )
+                                api.ErrorResponse(w, r, http.StatusBadRequest, errorsapi.ErrInvalidProductCode.Error())
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">ctx := params.WithPathParams(r.Context(), params.PathParams{Code: code})
+                        next.ServeHTTP(w, r.WithContext(ctx))</span>
+                })
+        }
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package api
+
+import (
+        "net/http"
+
+        "github.com/go-chi/render"
+)
+
+func OKResponse(w http.ResponseWriter, r *http.Request, data any) <span class="cov8" title="1">{
+        OKResponseWithStatus(w, r, http.StatusOK, data)
+}</span>
+
+func OKResponseWithStatus(w http.ResponseWriter, r *http.Request, status int, data any) <span class="cov8" title="1">{
+        render.Status(r, status)
+        render.SetContentType(render.ContentTypeJSON)
+        if data != nil </span><span class="cov8" title="1">{
+                render.JSON(w, r, data)
+        }</span>
+}
+
+func ErrorResponse(w http.ResponseWriter, r *http.Request, status int, message string) <span class="cov8" title="1">{
+        payload := struct {
+                Error string `json:"error"`
+        }{
+                Error: message,
+        }
+        render.Status(r, status)
+        render.SetContentType(render.ContentTypeJSON)
+        render.JSON(w, r, payload)
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package catalog
+
+import "github.com/mytheresa/go-hiring-challenge/internal/repository"
+
+func toVariantView(v repository.Variant, productPrice float64) VariantView <span class="cov8" title="1">{
+        if v.Price == nil </span><span class="cov8" title="1">{
+                return VariantView{
+                        Name:  v.Name,
+                        SKU:   v.SKU,
+                        Price: productPrice,
+                }
+        }</span>
+
+        <span class="cov8" title="1">return VariantView{
+                Name:  v.Name,
+                SKU:   v.SKU,
+                Price: v.Price.InexactFloat64(),
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package catalog
+
+import (
+        "context"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+        "github.com/mytheresa/go-hiring-challenge/internal/repository"
+        "github.com/shopspring/decimal"
+)
+
+type ProductStore interface {
+        ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]repository.Product, int64, error)
+        GetByCode(ctx context.Context, code string) (*repository.Product, error)
+}
+
+type Service struct {
+        log   logs.ApiLogger
+        store ProductStore
+}
+
+func New(store ProductStore) *Service <span class="cov8" title="1">{
+        return &amp;Service{
+                log:   logs.Logger(),
+                store: store}
+}</span>
+
+func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (ProductPage, error) <span class="cov8" title="1">{
+        res, total, err := s.store.ListProducts(ctx, limit, offset, categoryCode, maxPrice)
+        if err != nil </span><span class="cov8" title="1">{
+                return ProductPage{}, err
+        }</span>
+
+        <span class="cov8" title="1">products := make([]ProductView, len(res))
+        for i, p := range res </span><span class="cov8" title="1">{
+                products[i] = ProductView{
+                        Category: p.Category.Code,
+                        Code:     p.Code,
+                        Price:    p.Price.InexactFloat64(),
+                }
+        }</span>
+
+        // TODO: handle cases without results
+        <span class="cov8" title="1">return ProductPage{Products: products, Total: total}, nil</span>
+}
+
+func (s *Service) DetailProduct(ctx context.Context, code string) (ProductView, error) <span class="cov8" title="1">{
+        product, err := s.store.GetByCode(ctx, code)
+        if err != nil </span><span class="cov8" title="1">{
+                return ProductView{}, err
+        }</span>
+
+        <span class="cov8" title="1">variants := make([]VariantView, len(product.Variants))
+        for i, v := range product.Variants </span><span class="cov8" title="1">{
+                variants[i] = toVariantView(v, product.Price.InexactFloat64())
+        }</span>
+
+        <span class="cov8" title="1">return ProductView{
+                Category: product.Category.Code,
+                Code:     product.Code,
+                Price:    product.Price.InexactFloat64(),
+                Variants: variants,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package categories
+
+import (
+        "context"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+)
+
+type CategoriesStore interface {
+        ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]Category, int64, error)
+        CreateCategory(ctx context.Context, code string, name string) error
+        CreateCategories(ctx context.Context, inputs []CreateCategoryInput) error
+}
+
+type Service struct {
+        log   logs.ApiLogger
+        store CategoriesStore
+}
+
+func New(store CategoriesStore) *Service <span class="cov8" title="1">{
+        return &amp;Service{
+                log:   logs.Logger(),
+                store: store}
+}</span>
+
+func (s *Service) ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]Category, int64, error) <span class="cov8" title="1">{
+        return s.store.ListCategories(ctx, limit, offset, categoryCode)
+}</span>
+
+func (s *Service) CreateCategory(ctx context.Context, code string, name string) error <span class="cov8" title="1">{
+        return s.store.CreateCategory(ctx, code, name)
+}</span>
+
+func (s *Service) CreateCategories(ctx context.Context, inputs []CreateCategoryInput) error <span class="cov8" title="1">{
+        return s.store.CreateCategories(ctx, inputs)
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package repository
+
+// Category is the database model for product categories.
+type Category struct {
+        ID   uint   `gorm:"primaryKey"`
+        Code string `gorm:"uniqueIndex;not null"`
+        Name string `gorm:"not null"`
+
+        Products []Product `gorm:"foreignKey:CategoryID"`
+}
+
+func (Category) TableName() string <span class="cov8" title="1">{
+        return "categories"
+}</span>
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package repository
+
+import (
+        "context"
+        "errors"
+        "strings"
+
+        "github.com/mytheresa/go-hiring-challenge/internal/categories"
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+        "gorm.io/gorm"
+)
+
+type CategoryStore struct {
+        db  *gorm.DB
+        log logs.ApiLogger
+}
+
+func NewCategoryStore(db *gorm.DB) *CategoryStore <span class="cov8" title="1">{
+        return &amp;CategoryStore{
+                db:  db,
+                log: logs.Logger(),
+        }
+}</span>
+func (cs *CategoryStore) ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]categories.Category, int64, error) <span class="cov8" title="1">{
+
+        var registers []Category
+        var total int64
+
+        countQuery := cs.db.WithContext(ctx).Model(&amp;Category{})
+
+        if categoryCode != "" </span><span class="cov8" title="1">{
+                countQuery = countQuery.Where("code = ?", categoryCode)
+        }</span>
+
+        <span class="cov8" title="1">if err := countQuery.Count(&amp;total).Error; err != nil </span><span class="cov8" title="1">{
+                cs.log.Error(ctx, "repository error counting categories",
+                        "error", err)
+                return nil, 0, errorsapi.ErrRepositoryCountCategories
+        }</span>
+
+        <span class="cov8" title="1">selectQuery := cs.db.WithContext(ctx).
+                Order("categories.code ASC").
+                Limit(limit).
+                Offset(offset)
+
+        if categoryCode != "" </span><span class="cov8" title="1">{
+                selectQuery = selectQuery.Where("code = ?", categoryCode)
+        }</span>
+
+        <span class="cov8" title="1">if err := selectQuery.Find(&amp;registers).Error; err != nil </span><span class="cov0" title="0">{
+                cs.log.Error(ctx, "repository error fetching categories",
+                        "error", err)
+                return nil, 0, errorsapi.ErrRepositoryFetchCategories
+        }</span>
+
+        <span class="cov8" title="1">cats := make([]categories.Category, 0, len(registers))
+        for _, r := range registers </span><span class="cov8" title="1">{
+                cats = append(cats, categories.Category{
+                        Code: r.Code,
+                        Name: r.Name,
+                })
+        }</span>
+
+        <span class="cov8" title="1">return cats, total, nil</span>
+}
+
+func (cs *CategoryStore) CreateCategory(ctx context.Context, code string, name string) error <span class="cov8" title="1">{
+        category := Category{
+                Code: code,
+                Name: name,
+        }
+
+        err := cs.db.WithContext(ctx).
+                Create(&amp;category).
+                Error
+
+        if err != nil </span><span class="cov8" title="1">{
+                cs.log.Error(ctx, "failed to insert register on database",
+                        "err", err)
+                if errors.Is(err, gorm.ErrDuplicatedKey) </span><span class="cov8" title="1">{
+                        cs.log.Warn(ctx, "conflicting category codes already exist in database", "code", code)
+                        return errorsapi.ErrRepositoryCategoryAlreadyExists
+                }</span>
+                <span class="cov8" title="1">return errorsapi.ErrRepositoryCreateCategory</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (cs *CategoryStore) CreateCategories(ctx context.Context, inputs []categories.CreateCategoryInput) error <span class="cov8" title="1">{
+        if len(inputs) == 0 </span><span class="cov8" title="1">{
+                return errorsapi.ErrRepositoryEmptyCategoriesInputList
+        }</span>
+
+        <span class="cov8" title="1">newRegisters := make([]Category, len(inputs))
+        codes := make([]string, len(inputs))
+
+        for i, in := range inputs </span><span class="cov8" title="1">{
+                code := strings.TrimSpace(in.Code)
+                newRegisters[i] = Category{Code: code, Name: in.Name}
+                codes[i] = code
+        }</span>
+
+        <span class="cov8" title="1">err := cs.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error </span><span class="cov8" title="1">{
+                return tx.Create(&amp;newRegisters).Error
+        }</span>)
+
+        <span class="cov8" title="1">if err != nil &amp;&amp; errors.Is(err, gorm.ErrDuplicatedKey) </span><span class="cov8" title="1">{
+                cs.log.Warn(ctx, "batch category creation conflict", "codes", codes)
+                var existing []string
+                qerr := cs.db.WithContext(ctx).
+                        Model(&amp;[]Category{}).
+                        Where("code IN ?", codes).
+                        Pluck("code", &amp;existing).Error
+
+                if qerr != nil </span><span class="cov0" title="0">{
+                        cs.log.Warn(ctx, "failed to lookup existing category codes after conflict", "err", qerr)
+                }</span> else<span class="cov8" title="1"> if len(existing) &gt; 0 </span><span class="cov8" title="1">{
+                        cs.log.Warn(ctx, "conflicting category codes already exist in database", "codes", existing)
+                }</span>
+
+                <span class="cov8" title="1">return errorsapi.ErrRepositoryCategoryAlreadyExists</span>
+        } else<span class="cov8" title="1"> if err != nil </span><span class="cov8" title="1">{
+                cs.log.Error(ctx, "failed to insert registers on database", "err", err)
+                return errorsapi.ErrRepositoryCreateCategory
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package repository
+
+import (
+        "github.com/shopspring/decimal"
+)
+
+// Product is the database model for catalog products.
+type Product struct {
+        ID    uint            `gorm:"primaryKey"`
+        Code  string          `gorm:"uniqueIndex;not null"`
+        Price decimal.Decimal `gorm:"type:decimal(10,2);not null"`
+
+        CategoryID uint     `gorm:"not null;index"`
+        Category   Category `gorm:"foreignKey:CategoryID;references:ID"`
+
+        Variants []Variant `gorm:"foreignKey:ProductID"`
+}
+
+func (Product) TableName() string <span class="cov8" title="1">{
+        return "products"
+}</span>
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package repository
+
+import (
+        "context"
+        "errors"
+
+        errorsapi "github.com/mytheresa/go-hiring-challenge/internal/errors"
+        "github.com/mytheresa/go-hiring-challenge/internal/logs"
+        "github.com/shopspring/decimal"
+        "gorm.io/gorm"
+)
+
+type ProductStore struct {
+        db  *gorm.DB
+        log logs.ApiLogger
+}
+
+func NewProductStore(db *gorm.DB) *ProductStore <span class="cov8" title="1">{
+        return &amp;ProductStore{
+                db:  db,
+                log: logs.Logger(),
+        }
+}</span>
+func (ps *ProductStore) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) <span class="cov8" title="1">{
+
+        var products []Product
+        var total int64
+
+        countQuery := ps.db.WithContext(ctx).Model(&amp;Product{})
+
+        if categoryCode != "" </span><span class="cov8" title="1">{
+                countQuery = countQuery.
+                        Joins("Category").
+                        Where(`"Category"."code" = ?`, categoryCode)
+        }</span>
+        <span class="cov8" title="1">if maxPrice != nil </span><span class="cov8" title="1">{
+                countQuery = countQuery.Where("products.price &lt; ?", maxPrice)
+        }</span>
+
+        <span class="cov8" title="1">if err := countQuery.Count(&amp;total).Error; err != nil </span><span class="cov8" title="1">{
+                ps.log.Error(ctx, "repository error counting products", "error", err)
+                return nil, 0, errorsapi.ErrRepositoryCountProducts
+        }</span>
+
+        <span class="cov8" title="1">selectQuery := ps.db.WithContext(ctx).
+                Order("products.price DESC").
+                Limit(limit).
+                Offset(offset).
+                Preload("Category")
+
+        if categoryCode != "" </span><span class="cov8" title="1">{
+                selectQuery = selectQuery.Joins("Category").
+                        Where(`"Category"."code" = ?`, categoryCode)
+        }</span>
+
+        <span class="cov8" title="1">if maxPrice != nil </span><span class="cov8" title="1">{
+                selectQuery = selectQuery.Where("products.price &lt; ?", maxPrice)
+        }</span>
+
+        <span class="cov8" title="1">if err := selectQuery.Find(&amp;products).Error; err != nil </span><span class="cov0" title="0">{
+                ps.log.Error(ctx, "repository error fetching products", "error", err)
+                return nil, 0, errorsapi.ErrRepositoryFetchProducts
+        }</span>
+
+        <span class="cov8" title="1">return products, total, nil</span>
+}
+
+func (ps *ProductStore) GetByCode(ctx context.Context, code string) (*Product, error) <span class="cov8" title="1">{
+        var product Product
+
+        err := ps.db.WithContext(ctx).
+                Preload("Category").
+                Preload("Variants").
+                Where("code = ?", code).
+                First(&amp;product).Error
+
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return nil, errorsapi.ErrProductNotFound
+                }</span>
+                <span class="cov8" title="1">ps.log.Error(ctx, "repository error fetching product details", "error", err)
+                return nil, errorsapi.ErrRepositoryFetchProduct</span>
+        }
+
+        <span class="cov8" title="1">return &amp;product, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package repository
+
+import (
+        "github.com/shopspring/decimal"
+)
+
+// Variant is the database model for product variants.
+type Variant struct {
+        ID        uint             `gorm:"primaryKey"`
+        ProductID uint             `gorm:"not null"`
+        Name      string           `gorm:"not null"`
+        SKU       string           `gorm:"uniqueIndex;not null"`
+        Price     *decimal.Decimal `gorm:"type:decimal(10,2);null"`
+}
+
+func (Variant) TableName() string <span class="cov8" title="1">{
+        return "product_variants"
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
