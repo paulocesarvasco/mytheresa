@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,7 +14,7 @@ import (
 )
 
 func main() {
-	log := logs.Init(slog.LevelInfo)
+	log := logs.Init()
 
 	// Load environment variables from .env file
 	if err := godotenv.Load(".env"); err != nil {
@@ -24,12 +23,7 @@ func main() {
 	}
 
 	// Initialize database connection
-	db, close := database.New(
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_PORT"),
-	)
+	db, close := database.New()
 	defer close()
 
 	dir := os.Getenv("POSTGRES_SQL_DIR")

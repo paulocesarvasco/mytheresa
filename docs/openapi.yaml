@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: Mytheresa API
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8484"
+
+tags:
+  - name: Categories
+  - name: Catalog
+
+paths:
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      description: Returns a paginated list of categories.
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/category_code"
+      responses:
+        "200":
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoriesListResponse"
+              example:
+                categories:
+                  - code: ACCESSORIES
+                    name: Accessories
+                  - code: CLOTHING
+                    name: Clothing
+                  - code: SHOES
+                    name: Shoes
+                total: 3
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      tags: [Categories]
+      summary: Create category or categories
+      description: Accepts either a single category object or an array of category objects.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CategoryCreate"
+                - type: array
+                  minItems: 1
+                  items:
+                    $ref: "#/components/schemas/CategoryCreate"
+            examples:
+              single:
+                summary: Single category
+                value:
+                  code: UNDERWEAR
+                  name: Underwear
+              batch:
+                summary: Batch categories
+                value:
+                  - code: UNDERWEAR
+                    name: Underwear
+                  - code: BEAULTY
+                    name: Beaulty
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CategoryCreate"
+                  - type: array
+                    minItems: 1
+                    items:
+                      $ref: "#/components/schemas/CategoryCreate"
+              examples:
+                single:
+                  summary: Single category
+                  value:
+                    - code: UNDERWEAR
+                      name: Underwear
+                batch:
+                  summary: Batch categories
+                  value:
+                    - code: UNDERWEAR
+                      name: Underwear
+                    - code: BEAULTY
+                      name: Beaulty
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /catalog:
+    get:
+      tags: [Catalog]
+      summary: List catalog products
+      description: Returns a paginated list of products.
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/category_code"
+        - $ref: "#/components/parameters/max_price"
+      responses:
+        "200":
+          description: Catalog list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogListResponse"
+              example:
+                products:
+                  - category: ACCESSORIES
+                    code: PROD005
+                    price: 22.99
+                  - category: CLOTHING
+                    code: PROD007
+                    price: 18.2
+                total: 8
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /catalog/{code}:
+    get:
+      tags: [Catalog]
+      summary: Get a product by code
+      description: Returns a product and its variants. The product code must match PROD###.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Product code identifier (must match PROD###).
+          schema:
+            type: string
+            pattern: "^PROD[0-9]{3}$"
+          example: PROD001
+      responses:
+        "200":
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetails"
+              example:
+                category: CLOTHING
+                code: PROD001
+                price: 10.99
+                variants:
+                  - name: Variant A
+                    sku: SKU001A
+                    price: 11.99
+                  - name: Variant B
+                    sku: SKU001B
+                    price: 10.99
+                  - name: Variant C
+                    sku: SKU001C
+                    price: 10.99
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      required: false
+      description: >
+        Max number of records to return. Must be an integer >= 1.
+        If greater than the server maximum, it will be clamped to the maximum.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      example: 10
+
+    offset:
+      name: offset
+      in: query
+      required: false
+      description: Number of records to skip. Must be an integer >= 0.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      example: 0
+
+    category_code:
+      name: category_code
+      in: query
+      required: false
+      description: Filter results by category code.
+      schema:
+        type: string
+        minLength: 1
+      example: ACCESSORIES
+
+    max_price:
+      name: max_price
+      in: query
+      required: false
+      description: >
+        Filter results by maximum price. Must be a positive decimal string (> 0).
+        Invalid values return 400.
+      schema:
+        type: string
+        pattern: "^[0-9]+(\\.[0-9]+)?$"
+      example: "19.99"
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            invalidLimit:
+              summary: Invalid limit
+              value:
+                error: invalid limit parameter
+            invalidOffset:
+              summary: Invalid offset
+              value:
+                error: invalid offset parameter
+            invalidMaxPrice:
+              summary: Invalid max_price
+              value:
+                error: invalid max_price parameter
+            invalidProductCode:
+              summary: Invalid product code
+              value:
+                error: invalid product code
+            invalidJSONBody:
+              summary: Invalid JSON body
+              value:
+                error: invalid json body
+            emptyJSONBody:
+              summary: Empty body
+              value:
+                error: empty body
+            invalidRequestSchema:
+              summary: Invalid request schema
+              value:
+                error: invalid request schema
+            unexpectedBodyFormat:
+              summary: Unexpected body format
+              value:
+                error: expected object or array
+
+    UnsupportedMediaType:
+      description: Unsupported media type
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: content type must be application/json
+
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            categoryAlreadyExists:
+              summary: Category already exists
+              value:
+                error: category already exists
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: product not found
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            countProductsFailed:
+              summary: Repository count products failed
+              value:
+                error: failed to count products
+            fetchProductsFailed:
+              summary: Repository fetch products failed
+              value:
+                error: failed to fetch products
+            countCategoriesFailed:
+              summary: Repository count categories failed
+              value:
+                error: failed to count categories
+            fetchCategoriesFailed:
+              summary: Repository fetch categories failed
+              value:
+                error: failed to fetch categories
+            createCategoryFailed:
+              summary: Repository create category failed
+              value:
+                error: failed to create category
+            emptyCategoriesInputList:
+              summary: Repository received empty input list
+              value:
+                error: received empty input list
+            fetchProductFailed:
+              summary: Repository fetch product failed
+              value:
+                error: failed to fetch product
+            missingRequestParams:
+              summary: Missing request params in context
+              value:
+                error: request parameters not found in context
+
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+
+    CategoryCreate:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Category code (unique identifier).
+          example: ACCESSORIES
+        name:
+          type: string
+          minLength: 1
+          description: Category user-friendly name.
+          example: Accessories
+
+    Category:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          example: ACCESSORIES
+        name:
+          type: string
+          example: Accessories
+
+    CategoriesListResponse:
+      type: object
+      required: [categories, total]
+      additionalProperties: false
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+        total:
+          type: integer
+          minimum: 0
+          example: 3
+
+    Product:
+      type: object
+      required: [category, code, price]
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+          minLength: 1
+          example: ACCESSORIES
+        code:
+          type: string
+          minLength: 1
+          example: PROD005
+        price:
+          type: number
+          format: double
+          minimum: 0
+          example: 22.99
+
+    Variant:
+      type: object
+      required: [name, sku, price]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Variant A
+        sku:
+          type: string
+          minLength: 1
+          example: SKU001A
+        price:
+          type: number
+          format: double
+          minimum: 0
+          example: 11.99
+
+    ProductDetails:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          required: [variants]
+          additionalProperties: false
+          properties:
+            variants:
+              type: array
+              items:
+                $ref: "#/components/schemas/Variant"
+
+    CatalogListResponse:
+      type: object
+      required: [products, total]
+      additionalProperties: false
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+          minimum: 0
+          example: 8

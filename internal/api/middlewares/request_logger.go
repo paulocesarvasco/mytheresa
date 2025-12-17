@@ -54,8 +54,6 @@ func RequestLogger(next http.Handler) http.Handler {
 		next.ServeHTTP(sw, r)
 
 		l.Info("request completed",
-			"method", r.Method,
-			"path", r.URL.Path,
 			"status", sw.status,
 			"bytes", sw.bytes,
 			"duration_ms", time.Since(start).Milliseconds(),

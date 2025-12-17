@@ -1,14 +1,61 @@
 services:
   postgres:
     image: postgres:17.5
+    container_name: challenge-database
+    env_file:
+      - .env
     environment:
-      POSTGRES_PASSWORD: password
-      POSTGRES_USER: postgres
-      POSTGRES_DB: challenge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - database:/var/lib/postgresql/data
     healthcheck:
-      test: pg_isready
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - challenge
+
+  server:
+    container_name: challenge-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    networks:
+      - challenge
+
+  swagger:
+    image: swaggerapi/swagger-ui:latest
+    container_name: challenge-client
+    env_file:
+      - .env
+    environment:
+      SWAGGER_JSON: /tmp/openapi.yaml
+    volumes:
+      - ./docs/openapi.yaml:/tmp/openapi.yaml:ro
+    ports:
+      - "${SWAGGER_PORT}:8080"
+    depends_on:
+      - server
+    networks:
+      - challenge
+
+volumes:
+  database:
+    name: database
+
+networks:
+  challenge:
+    name: challenge

@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
 	categoriesapi "github.com/mytheresa/go-hiring-challenge/internal/api/categories"
@@ -27,24 +26,20 @@ import (
 )
 
 func main() {
-	logs.Init(slog.LevelDebug)
-
-	// Load environment variables
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("error loading .env file: %s", err)
-	}
-
 	// Signal handling for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// Load environment variables
+	if err := godotenv.Load(".env"); err != nil {
+		logs.Logger().Error(ctx, "error loading .env file", "error", err)
+		os.Exit(1)
+	}
+
+	log := logs.Init()
+
 	// Initialize database
-	db, close := database.New(
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_PORT"),
-	)
+	db, close := database.New()
 	defer close()
 
 	// Initialize dependencies
@@ -65,6 +60,11 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.StripSlashes)
 
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_PORT"))},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+	}))
+
 	// Custom logger
 	r.Use(middlewares.RequestLogger)
 
@@ -74,29 +74,32 @@ func main() {
 
 	// HTTP server
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("HTTP_PORT")),
+		Addr:    fmt.Sprintf("%s:%s", os.Getenv("HTTP_HOST"), os.Getenv("HTTP_PORT")),
 		Handler: r,
 	}
 
 	// Start server
 	go func() {
-		log.Printf("starting server on http://localhost%s", srv.Addr)
+		log.Info(ctx, "starting server", "address", srv.Addr)
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server failed: %s", err)
+			log.Error(ctx, "server failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	// Wait for shutdown signal
 	<-ctx.Done()
-	log.Println("shutting down server...")
+	log.Info(ctx, "shutting down server...")
 
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("server shutdown error: %v", err)
+		log.Error(ctx, "server shutdown error", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("server stopped gracefully")
+	log.Info(ctx, "server stopped gracefully")
 }

@@ -6,6 +6,7 @@ require github.com/joho/godotenv v1.5.1
 
 require (
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.29.0
 	github.com/golang-migrate/migrate/v4 v4.19.1

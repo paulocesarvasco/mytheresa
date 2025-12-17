@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 type customLogger struct {
@@ -38,8 +39,8 @@ func (l *customLogger) Printf(format string, args ...any) {
 	slog.Info(fmt.Sprintf(format, args...))
 }
 
-func Init(level slog.Level) ApiLogger {
-	defaultLogger.level.Set(level)
+func Init() ApiLogger {
+	defaultLogger.level.Set(levelFromEnv())
 
 	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: &defaultLogger.level,
@@ -62,7 +63,7 @@ func CurrentLevel() slog.Level {
 
 func Logger() ApiLogger {
 	if defaultLogger.logger == nil {
-		Init(slog.LevelInfo)
+		Init()
 	}
 	return &defaultLogger
 }
@@ -84,4 +85,21 @@ func from(ctx context.Context) *slog.Logger {
 		return l
 	}
 	return defaultLogger.logger
+}
+
+func levelFromEnv() slog.Level {
+	level := strings.ToLower(strings.TrimSpace(os.Getenv("LOG_LEVEL")))
+
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }

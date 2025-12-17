@@ -84,5 +84,5 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.OKResponseWithStatus(w, r, http.StatusCreated, nil)
+	api.OKResponseWithStatus(w, r, http.StatusCreated, req)
 }
