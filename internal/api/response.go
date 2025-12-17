@@ -13,7 +13,9 @@ func OKResponse(w http.ResponseWriter, r *http.Request, data any) {
 func OKResponseWithStatus(w http.ResponseWriter, r *http.Request, status int, data any) {
 	render.Status(r, status)
 	render.SetContentType(render.ContentTypeJSON)
-	render.JSON(w, r, data)
+	if data != nil {
+		render.JSON(w, r, data)
+	}
 }
 
 func ErrorResponse(w http.ResponseWriter, r *http.Request, status int, message string) {

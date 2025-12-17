@@ -20,7 +20,8 @@ coverage: test
 
 docker-up ::
 	@sed -i 's/^POSTGRES_HOST=localhost$$/POSTGRES_HOST=challenge-database/' .env
-	@docker compose up
+	@docker compose up -d --build
+	@docker compose logs -f
 
 docker-up-db ::
 	@docker compose up -d postgres

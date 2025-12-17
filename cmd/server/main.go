@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,16 +25,17 @@ import (
 )
 
 func main() {
-	logs.Init(slog.LevelDebug)
-
-	// Load environment variables
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("error loading .env file: %s", err)
-	}
-
 	// Signal handling for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	// Load environment variables
+	if err := godotenv.Load(".env"); err != nil {
+		logs.Logger().Error(ctx, "error loading .env file", "error", err)
+		os.Exit(1)
+	}
+
+	log := logs.Init()
 
 	// Initialize database
 	db, close := database.New()
@@ -69,29 +68,32 @@ func main() {
 
 	// HTTP server
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("HTTP_PORT")),
+		Addr:    fmt.Sprintf("%s:%s", os.Getenv("HTTP_HOST"), os.Getenv("HTTP_PORT")),
 		Handler: r,
 	}
 
 	// Start server
 	go func() {
-		log.Printf("starting server on http://localhost%s", srv.Addr)
+		log.Info(ctx, "starting server", "address", srv.Addr)
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server failed: %s", err)
+			log.Error(ctx, "server failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	// Wait for shutdown signal
 	<-ctx.Done()
-	log.Println("shutting down server...")
+	log.Info(ctx, "shutting down server...")
 
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("server shutdown error: %v", err)
+		log.Error(ctx, "server shutdown error", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("server stopped gracefully")
+	log.Info(ctx, "server stopped gracefully")
 }
