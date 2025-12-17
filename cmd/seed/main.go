@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,7 +14,7 @@ import (
 )
 
 func main() {
-	log := logs.Init(slog.LevelInfo)
+	log := logs.Init()
 
 	// Load environment variables from .env file
 	if err := godotenv.Load(".env"); err != nil {

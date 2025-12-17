@@ -36,6 +36,22 @@ services:
     networks:
       - challenge
 
+  swagger:
+    image: swaggerapi/swagger-ui:latest
+    container_name: challenge-client
+    env_file:
+      - .env
+    environment:
+      SWAGGER_JSON: /tmp/openapi.yaml
+    volumes:
+      - ./docs/openapi.yaml:/tmp/openapi.yaml:ro
+    ports:
+      - "${SWAGGER_PORT}:8080"
+    depends_on:
+      - server
+    networks:
+      - challenge
+
 volumes:
   database:
     name: database

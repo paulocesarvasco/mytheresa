@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	catalogapi "github.com/mytheresa/go-hiring-challenge/internal/api/catalog"
 	categoriesapi "github.com/mytheresa/go-hiring-challenge/internal/api/categories"
@@ -58,6 +59,11 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.StripSlashes)
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_PORT"))},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+	}))
 
 	// Custom logger
 	r.Use(middlewares.RequestLogger)
