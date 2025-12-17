@@ -107,6 +107,7 @@ func (cs *CategoryStore) CreateCategories(ctx context.Context, inputs []categori
 	})
 
 	if err != nil && errors.Is(err, gorm.ErrDuplicatedKey) {
+		cs.log.Warn(ctx, "batch category creation conflict", "codes", codes)
 		var existing []string
 		qerr := cs.db.WithContext(ctx).
 			Model(&[]Category{}).

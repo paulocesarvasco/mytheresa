@@ -11,8 +11,7 @@ type fakeService struct {
 	listCategoriesTotal int64
 	listCategoriesErr   error
 
-	createCategoryResp categories.Category
-	createCategoryErr  error
+	createCategoryErr error
 }
 
 func NewFakeService() *fakeService {
@@ -26,7 +25,10 @@ func (f *fakeService) SetListCategoriesResponse(categories []categories.Category
 }
 
 func (f *fakeService) SetCreateCategoryResponse(category categories.Category, err error) {
-	f.createCategoryResp = category
+	f.createCategoryErr = err
+}
+
+func (f *fakeService) SetCreateCategoriesResponse(category categories.Category, err error) {
 	f.createCategoryErr = err
 }
 
@@ -39,5 +41,5 @@ func (f *fakeService) CreateCategory(ctx context.Context, code string, name stri
 }
 
 func (f *fakeService) CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) error {
-	return nil
+	return f.createCategoryErr
 }

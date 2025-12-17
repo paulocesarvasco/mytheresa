@@ -112,11 +112,10 @@ func TestCreateCategory(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "create category succeeds",
-			categoryCode:  "FOO",
-			categoryName:  "foo",
-			timeout:       60 * time.Second,
-			expectedError: nil,
+			name:         "create category succeeds",
+			categoryCode: "FOO",
+			categoryName: "foo",
+			timeout:      60 * time.Second,
 		},
 		{
 			name:          "category already exists",
@@ -141,6 +140,66 @@ func TestCreateCategory(t *testing.T) {
 			store := NewCategoryStore(db)
 			ctx, _ := context.WithTimeout(context.Background(), tt.timeout)
 			err := store.CreateCategory(ctx, tt.categoryCode, tt.categoryName)
+			assert.Equal(t, tt.expectedError, err)
+
+		})
+	}
+
+}
+
+func TestCreateCategories(t *testing.T) {
+	tests := []struct {
+		name          string
+		inputs        []categories.CreateCategoryInput
+		timeout       time.Duration
+		expectedError error
+	}{
+		{
+			name: "create category succeeds",
+			inputs: []categories.CreateCategoryInput{
+				{Code: "FOO", Name: "foo"},
+			},
+			timeout: 60 * time.Second,
+		},
+		{
+			name:          "empty input list categories",
+			timeout:       60 * time.Second,
+			expectedError: errorsapi.ErrRepositoryEmptyCategoriesInputList,
+		},
+		{
+			name: "category already exists",
+			inputs: []categories.CreateCategoryInput{
+				{Code: "SHOES", Name: "shoes"},
+			},
+			timeout:       60 * time.Second,
+			expectedError: errorsapi.ErrRepositoryCategoryAlreadyExists,
+		},
+		{
+			name: "conflict on categories input",
+			inputs: []categories.CreateCategoryInput{
+				{Code: "FOO", Name: "foo"},
+				{Code: "FOO", Name: "foo"},
+			},
+			timeout:       60 * time.Second,
+			expectedError: errorsapi.ErrRepositoryCategoryAlreadyExists,
+		},
+		{
+			name: "database connection timeout",
+			inputs: []categories.CreateCategoryInput{
+				{Code: "FOO", Name: "foo"},
+			},
+			expectedError: errorsapi.ErrRepositoryCreateCategory,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db, cleanup := testutil.StartPostgresContainer(t, context.Background())
+			t.Cleanup(cleanup)
+
+			store := NewCategoryStore(db)
+			ctx, _ := context.WithTimeout(context.Background(), tt.timeout)
+			err := store.CreateCategories(ctx, tt.inputs)
 			assert.Equal(t, tt.expectedError, err)
 
 		})

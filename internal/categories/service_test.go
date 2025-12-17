@@ -84,3 +84,34 @@ func TestCreateCategory(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateCategories(t *testing.T) {
+	tests := []struct {
+		name          string
+		inputs        []CreateCategoryInput
+		fakeError     error
+		expectedError error
+	}{
+		{
+			name:   "create category succeeds",
+			inputs: []CreateCategoryInput{},
+		},
+		{
+			name:          "create category fails on repository error",
+			inputs:        []CreateCategoryInput{},
+			fakeError:     errorsapi.ErrRepositoryCreateCategory,
+			expectedError: errorsapi.ErrRepositoryCreateCategory,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewFakeStore()
+			store.SetCreateCategoriesResponse(tt.fakeError)
+
+			service := New(store)
+			err := service.CreateCategories(t.Context(), tt.inputs)
+			assert.Equal(t, tt.expectedError, err)
+		})
+	}
+}

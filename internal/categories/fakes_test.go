@@ -26,6 +26,10 @@ func (f *fakeStore) SetCreateCategoryResponse(err error) {
 	f.createCategoryErr = err
 }
 
+func (f *fakeStore) SetCreateCategoriesResponse(err error) {
+	f.createCategoryErr = err
+}
+
 func (f *fakeStore) ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]Category, int64, error) {
 	return f.listCategoriesResp, f.listTotal, f.listProductsErr
 }
@@ -34,6 +38,6 @@ func (f *fakeStore) CreateCategory(ctx context.Context, code string, name string
 	return f.createCategoryErr
 }
 
-func (f *fakeStore) CreateCategories(ctx context.Context, in []CreateCategoryInput) error {
-	return nil
+func (f *fakeStore) CreateCategories(ctx context.Context, inputs []CreateCategoryInput) error {
+	return f.createCategoryErr
 }

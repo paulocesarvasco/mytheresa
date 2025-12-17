@@ -152,8 +152,7 @@ func TestCreateCategory(t *testing.T) {
 		expectedBody   any
 	}{
 		{
-			name:         "create category success",
-			fakeCategory: categories.Category{Code: "foo", Name: "bar"},
+			name: "creates single category successfully",
 			requestBody: map[string]any{
 				"code": "foo",
 				"name": "bar",
@@ -210,6 +209,36 @@ func TestCreateCategory(t *testing.T) {
 			expectedStatus: http.StatusInternalServerError,
 			expectedCT:     "application/json",
 			expectedBody:   map[string]any{"error": errorsapi.ErrRepositoryCreateCategory.Error()},
+		},
+		{
+			name: "successfully creates a batch of categories",
+			requestBody: []categories.CreateCategoryInput{
+				{Code: "FOO", Name: "foo"},
+				{Code: "BAR", Name: "bar"},
+			},
+			contentType:    "application/json",
+			expectedStatus: http.StatusCreated,
+			expectedCT:     "application/json",
+		},
+		{
+			name:           "request body is not object or list",
+			requestBody:    `[{"code":"FOO","name":"foo"},{"code":"BAR","name":"bar"}]`,
+			contentType:    "application/json",
+			expectedStatus: http.StatusBadRequest,
+			expectedCT:     "application/json",
+			expectedBody:   map[string]any{"error": errorsapi.ErrInvalidJSONBody.Error()},
+		},
+		{
+			name:      "conflict to insert batch registers",
+			fakeError: errorsapi.ErrRepositoryCategoryAlreadyExists,
+			requestBody: []categories.CreateCategoryInput{
+				{Code: "FOO", Name: "foo"},
+				{Code: "BAR", Name: "bar"},
+			},
+			contentType:    "application/json",
+			expectedStatus: http.StatusConflict,
+			expectedCT:     "application/json",
+			expectedBody:   map[string]any{"error": errorsapi.ErrRepositoryCategoryAlreadyExists.Error()},
 		},
 	}
 
