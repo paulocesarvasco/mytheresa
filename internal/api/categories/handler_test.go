@@ -160,6 +160,9 @@ func TestCreateCategory(t *testing.T) {
 			contentType:    "application/json",
 			expectedStatus: http.StatusCreated,
 			expectedCT:     "application/json",
+			expectedBody: []map[string]any{
+				{"code": "foo", "name": "bar"},
+			},
 		},
 		{
 			name:           "invalid content type",
@@ -212,13 +215,17 @@ func TestCreateCategory(t *testing.T) {
 		},
 		{
 			name: "successfully creates a batch of categories",
-			requestBody: []categories.CreateCategoryInput{
-				{Code: "FOO", Name: "foo"},
-				{Code: "BAR", Name: "bar"},
+			requestBody: []map[string]any{
+				{"code": "FOO", "name": "foo"},
+				{"code": "BAR", "name": "bar"},
 			},
 			contentType:    "application/json",
 			expectedStatus: http.StatusCreated,
 			expectedCT:     "application/json",
+			expectedBody: []map[string]any{
+				{"code": "FOO", "name": "foo"},
+				{"code": "BAR", "name": "bar"},
+			},
 		},
 		{
 			name:           "request body is not object or list",
