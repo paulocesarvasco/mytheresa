@@ -34,10 +34,10 @@ func (f *fakeService) ListCategories(ctx context.Context, limit, offset int, cat
 	return f.listCategoriesResp, f.listCategoriesTotal, f.listCategoriesErr
 }
 
-func (f *fakeService) CreateCategory(ctx context.Context, code string, name string) (categories.Category, error) {
-	return f.createCategoryResp, f.createCategoryErr
+func (f *fakeService) CreateCategory(ctx context.Context, code string, name string) error {
+	return f.createCategoryErr
 }
 
-func (f *fakeService) CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) ([]categories.Category, error) {
-	return nil, nil
+func (f *fakeService) CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) error {
+	return nil
 }

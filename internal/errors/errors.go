@@ -16,12 +16,13 @@ var (
 
 	ErrInvalidProductCode = errors.New("invalid product code")
 
-	ErrRepositoryCountProducts         = errors.New("failed to count products")
-	ErrRepositoryFetchProducts         = errors.New("failed to fetch products")
-	ErrRepositoryCountCategories       = errors.New("failed to count categories")
-	ErrRepositoryFetchCategories       = errors.New("failed to fetch categories")
-	ErrRepositoryCreateCategory        = errors.New("failed to create category")
-	ErrRepositoryCategoryAlreadyExists = errors.New("category already exists")
+	ErrRepositoryCountProducts            = errors.New("failed to count products")
+	ErrRepositoryFetchProducts            = errors.New("failed to fetch products")
+	ErrRepositoryCountCategories          = errors.New("failed to count categories")
+	ErrRepositoryFetchCategories          = errors.New("failed to fetch categories")
+	ErrRepositoryEmptyCategoriesInputList = errors.New("received empty input list")
+	ErrRepositoryCreateCategory           = errors.New("failed to create category")
+	ErrRepositoryCategoryAlreadyExists    = errors.New("category already exists")
 
 	ErrProductNotFound        = errors.New("product not found")
 	ErrRepositoryFetchProduct = errors.New("failed to fetch product")

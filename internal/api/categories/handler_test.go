@@ -161,7 +161,6 @@ func TestCreateCategory(t *testing.T) {
 			contentType:    "application/json",
 			expectedStatus: http.StatusCreated,
 			expectedCT:     "application/json",
-			expectedBody:   []CategoryView{{Code: "foo", Name: "bar"}},
 		},
 		{
 			name:           "invalid content type",

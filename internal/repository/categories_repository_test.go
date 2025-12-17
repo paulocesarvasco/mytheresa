@@ -105,20 +105,18 @@ func TestListCategories(t *testing.T) {
 
 func TestCreateCategory(t *testing.T) {
 	tests := []struct {
-		name             string
-		categoryCode     string
-		categoryName     string
-		timeout          time.Duration
-		expectedCategory categories.Category
-		expectedError    error
+		name          string
+		categoryCode  string
+		categoryName  string
+		timeout       time.Duration
+		expectedError error
 	}{
 		{
-			name:             "create category succeeds",
-			categoryCode:     "FOO",
-			categoryName:     "foo",
-			timeout:          60 * time.Second,
-			expectedCategory: categories.Category{Code: "FOO", Name: "foo"},
-			expectedError:    nil,
+			name:          "create category succeeds",
+			categoryCode:  "FOO",
+			categoryName:  "foo",
+			timeout:       60 * time.Second,
+			expectedError: nil,
 		},
 		{
 			name:          "category already exists",
@@ -142,8 +140,7 @@ func TestCreateCategory(t *testing.T) {
 
 			store := NewCategoryStore(db)
 			ctx, _ := context.WithTimeout(context.Background(), tt.timeout)
-			newCategory, err := store.CreateCategory(ctx, tt.categoryCode, tt.categoryName)
-			assert.Equal(t, tt.expectedCategory, newCategory)
+			err := store.CreateCategory(ctx, tt.categoryCode, tt.categoryName)
 			assert.Equal(t, tt.expectedError, err)
 
 		})

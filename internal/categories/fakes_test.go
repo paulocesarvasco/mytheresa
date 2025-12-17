@@ -9,8 +9,7 @@ type fakeStore struct {
 	listTotal          int64
 	listProductsErr    error
 
-	createCategoryResp Category
-	createCategoryErr  error
+	createCategoryErr error
 }
 
 func NewFakeStore() *fakeStore {
@@ -23,8 +22,7 @@ func (f *fakeStore) SetListCategoriesResponse(categories []Category, total int64
 	f.listProductsErr = err
 }
 
-func (f *fakeStore) SetCreateCategoryResponse(category Category, err error) {
-	f.createCategoryResp = category
+func (f *fakeStore) SetCreateCategoryResponse(err error) {
 	f.createCategoryErr = err
 }
 
@@ -32,10 +30,10 @@ func (f *fakeStore) ListCategories(ctx context.Context, limit, offset int, categ
 	return f.listCategoriesResp, f.listTotal, f.listProductsErr
 }
 
-func (f *fakeStore) CreateCategory(ctx context.Context, code string, name string) (Category, error) {
-	return f.createCategoryResp, f.createCategoryErr
+func (f *fakeStore) CreateCategory(ctx context.Context, code string, name string) error {
+	return f.createCategoryErr
 }
 
-func (f *fakeStore) CreateCategories(ctx context.Context, in []CreateCategoryInput) ([]Category, error) {
-	return nil, nil
+func (f *fakeStore) CreateCategories(ctx context.Context, in []CreateCategoryInput) error {
+	return nil
 }

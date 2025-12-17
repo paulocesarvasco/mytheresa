@@ -15,8 +15,8 @@ import (
 
 type Service interface {
 	ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]categories.Category, int64, error)
-	CreateCategory(ctx context.Context, code string, name string) (categories.Category, error)
-	CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) ([]categories.Category, error)
+	CreateCategory(ctx context.Context, code string, name string) error
+	CreateCategories(ctx context.Context, categories []categories.CreateCategoryInput) error
 }
 
 type Handler struct {
@@ -60,19 +60,18 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := []categories.Category{{}}
 	var err error
 	if len(req) == 1 {
-		res[0], err = h.service.CreateCategory(r.Context(), req[0].Code, req[0].Name)
+		err = h.service.CreateCategory(r.Context(), req[0].Code, req[0].Name)
 	} else {
 		inputs := make([]categories.CreateCategoryInput, len(req))
-		for _, r := range req {
-			inputs = append(inputs, categories.CreateCategoryInput{
+		for i, r := range req {
+			inputs[i] = categories.CreateCategoryInput{
 				Code: r.Code,
 				Name: r.Name,
-			})
+			}
 		}
-		res, err = h.service.CreateCategories(r.Context(), inputs)
+		err = h.service.CreateCategories(r.Context(), inputs)
 	}
 
 	if err != nil {
@@ -85,13 +84,5 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories := make([]CategoryView, len(res))
-	for i, c := range res {
-		categories[i] = CategoryView{
-			Code: c.Code,
-			Name: c.Name,
-		}
-	}
-
-	api.OKResponseWithStatus(w, r, http.StatusCreated, categories)
+	api.OKResponseWithStatus(w, r, http.StatusCreated, nil)
 }

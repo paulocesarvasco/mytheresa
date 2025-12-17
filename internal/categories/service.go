@@ -8,8 +8,8 @@ import (
 
 type CategoriesStore interface {
 	ListCategories(ctx context.Context, limit, offset int, categoryCode string) ([]Category, int64, error)
-	CreateCategory(ctx context.Context, code string, name string) (Category, error)
-	CreateCategories(ctx context.Context, in []CreateCategoryInput) ([]Category, error)
+	CreateCategory(ctx context.Context, code string, name string) error
+	CreateCategories(ctx context.Context, inputs []CreateCategoryInput) error
 }
 
 type Service struct {
@@ -27,10 +27,10 @@ func (s *Service) ListCategories(ctx context.Context, limit, offset int, categor
 	return s.store.ListCategories(ctx, limit, offset, categoryCode)
 }
 
-func (s *Service) CreateCategory(ctx context.Context, code string, name string) (Category, error) {
+func (s *Service) CreateCategory(ctx context.Context, code string, name string) error {
 	return s.store.CreateCategory(ctx, code, name)
 }
 
-func (s *Service) CreateCategories(ctx context.Context, in []CreateCategoryInput) ([]Category, error) {
-	return nil, nil
+func (s *Service) CreateCategories(ctx context.Context, inputs []CreateCategoryInput) error {
+	return s.store.CreateCategories(ctx, inputs)
 }

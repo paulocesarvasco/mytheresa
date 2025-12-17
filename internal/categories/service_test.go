@@ -55,18 +55,16 @@ func TestListProducts(t *testing.T) {
 
 func TestCreateCategory(t *testing.T) {
 	tests := []struct {
-		name             string
-		categoryName     string
-		categoryCode     string
-		fakeCategory     Category
-		fakeError        error
-		expectedCategory Category
-		expectedError    error
+		name          string
+		categoryName  string
+		categoryCode  string
+		fakeCategory  Category
+		fakeError     error
+		expectedError error
 	}{
 		{
-			name:             "create category succeeds",
-			fakeCategory:     Category{Code: "FOO", Name: "foo"},
-			expectedCategory: Category{Code: "FOO", Name: "foo"},
+			name:         "create category succeeds",
+			fakeCategory: Category{Code: "FOO", Name: "foo"},
 		},
 		{
 			name:          "create category fails on repository error",
@@ -78,12 +76,10 @@ func TestCreateCategory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := NewFakeStore()
-			store.SetCreateCategoryResponse(tt.fakeCategory, tt.fakeError)
+			store.SetCreateCategoryResponse(tt.fakeError)
 
 			service := New(store)
-			newCategory, err := service.CreateCategory(t.Context(), tt.categoryCode, tt.categoryName)
-
-			assert.Equal(t, tt.expectedCategory, newCategory)
+			err := service.CreateCategory(t.Context(), tt.categoryCode, tt.categoryName)
 			assert.Equal(t, tt.expectedError, err)
 		})
 	}
