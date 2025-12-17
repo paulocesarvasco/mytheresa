@@ -5,6 +5,7 @@ seed ::
 	@go run cmd/seed/main.go
 
 run ::
+	@sed -i 's/^POSTGRES_HOST=challenge-database$$/POSTGRES_HOST=localhost/' .env
 	@go run cmd/server/main.go
 
 test ::
@@ -15,7 +16,11 @@ coverage: test
 	@firefox coverage.html
 
 docker-up ::
-	docker compose up -d
+	docker compose up -d postgres
 
 docker-down ::
 	docker compose down
+
+server ::
+	@sed -i 's/^POSTGRES_HOST=localhost$$/POSTGRES_HOST=challenge-database/' .env
+	docker compose up

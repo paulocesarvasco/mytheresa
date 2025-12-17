@@ -1,14 +1,42 @@
 services:
   postgres:
     image: postgres:17.5
+    container_name: challenge-database
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
       POSTGRES_DB: challenge
     ports:
       - "5432:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
     healthcheck:
-      test: pg_isready
+      test: ["CMD-SHELL", "pg_isready -U postgres -d challenge"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - challenge
+
+  server:
+    container_name: challenge-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8484:8484"
+    networks:
+      - challenge
+
+volumes:
+  database:
+    name: database
+
+networks:
+  challenge:
+    name: challenge

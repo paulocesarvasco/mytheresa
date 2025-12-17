@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	_ "github.com/lib/pq"
 	"github.com/mytheresa/go-hiring-challenge/internal/logs"
@@ -11,8 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func New(user, password, dbname, port string) (db *gorm.DB, close func() error) {
-	dsn := fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", user, password, port, dbname)
+func New(dsn string) (db *gorm.DB, close func() error) {
 
 	log := logs.Logger()
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
