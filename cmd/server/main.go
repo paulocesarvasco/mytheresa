@@ -39,14 +39,7 @@ func main() {
 	defer stop()
 
 	// Initialize database
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_HOST"),
-		os.Getenv("POSTGRES_PORT"),
-		os.Getenv("POSTGRES_DB"))
-
-	db, close := database.New(dsn)
+	db, close := database.New()
 	defer close()
 
 	// Initialize dependencies

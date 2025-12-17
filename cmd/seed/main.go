@@ -24,12 +24,7 @@ func main() {
 	}
 
 	// Initialize database connection
-	db, close := database.New(
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_PORT"),
-	)
+	db, close := database.New()
 	defer close()
 
 	dir := os.Getenv("POSTGRES_SQL_DIR")

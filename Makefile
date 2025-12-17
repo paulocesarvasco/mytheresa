@@ -2,6 +2,7 @@ tidy ::
 	@go mod tidy
 
 seed ::
+	@sed -i 's/^POSTGRES_HOST=challenge-database$$/POSTGRES_HOST=localhost/' .env
 	@go run cmd/seed/main.go
 
 run ::
@@ -12,7 +13,9 @@ test ::
 	@go test -v -count=1 -race ./... -coverprofile=coverage.out -covermode=atomic
 
 coverage: test
-	@go tool cover -html=coverage.out -o coverage.html
+	@grep -vEf .covignore coverage.out > coverage.filtered.out
+	@go tool cover -html=coverage.filtered.out -o coverage.html
+	@rm -f coverage.filtered.out
 	@firefox coverage.html
 
 docker-up ::
