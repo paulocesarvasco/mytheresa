@@ -13,17 +13,17 @@ test ::
 	@go test -v -count=1 -race ./... -coverprofile=coverage.out -covermode=atomic
 
 coverage: test
-	@grep -vEf .covignore coverage.out > coverage.filtered.out
+	@grep -vFf .covignore coverage.out > coverage.filtered.out
 	@go tool cover -html=coverage.filtered.out -o coverage.html
 	@rm -f coverage.filtered.out
-	@firefox coverage.html
+	@command -v xdg-open >/dev/null && xdg-open coverage.html || open coverage.html
 
 docker-up ::
-	docker compose up -d postgres
+	@sed -i 's/^POSTGRES_HOST=localhost$$/POSTGRES_HOST=challenge-database/' .env
+	@docker compose up
+
+docker-up-db ::
+	@docker compose up -d postgres
 
 docker-down ::
 	docker compose down
-
-server ::
-	@sed -i 's/^POSTGRES_HOST=localhost$$/POSTGRES_HOST=challenge-database/' .env
-	docker compose up
