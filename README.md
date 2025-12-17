@@ -103,6 +103,25 @@ Local environment configuration file used during development.
   - `make docker-up-db`: Start only the database service using containers.
   - `make docker-down`: Stop the Docker infrastructure.
 
+## Testing
+
+The application provides an embedded **Swagger UI** client for interactive API testing.
+
+### Execution
+
+Start the full application stack using:
+
+```bash
+make docker-up
+```
+
+
+After the containers are running, open a web browser and navigate to:
+
+```bash
+http://localhost:8585/
+```
+
 ---
 
 Follow up for the assignment here:
