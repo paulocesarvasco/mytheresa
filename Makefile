@@ -1,17 +1,31 @@
 tidy ::
-	@go mod tidy && go mod vendor
+	@go mod tidy
 
-seed ::
+seed :: docker-up-db
+	@sleep 3
+	@sed -i 's/^POSTGRES_HOST=challenge-database$$/POSTGRES_HOST=localhost/' .env
 	@go run cmd/seed/main.go
 
 run ::
+	@sed -i 's/^POSTGRES_HOST=challenge-database$$/POSTGRES_HOST=localhost/' .env
 	@go run cmd/server/main.go
 
 test ::
 	@go test -v -count=1 -race ./... -coverprofile=coverage.out -covermode=atomic
 
+coverage: test
+	@grep -vFf .covignore coverage.out > coverage.filtered.out
+	@go tool cover -html=coverage.filtered.out -o coverage.html
+	@rm -f coverage.filtered.out
+	@command -v xdg-open >/dev/null && xdg-open coverage.html || open coverage.html
+
 docker-up ::
-	docker compose up -d
+	@sed -i 's/^POSTGRES_HOST=localhost$$/POSTGRES_HOST=challenge-database/' .env
+	@docker compose up -d --build
+	@docker compose logs -f
+
+docker-up-db ::
+	@docker compose up -d postgres
 
 docker-down ::
 	docker compose down
