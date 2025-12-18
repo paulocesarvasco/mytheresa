@@ -109,6 +109,12 @@ The application provides an embedded **Swagger UI** client for interactive API t
 
 ### Execution
 
+Create and populate tables:
+
+```bash
+make seed
+```
+
 Start the full application stack using:
 
 ```bash
