@@ -18,7 +18,8 @@ import (
 func TestGetProducts(t *testing.T) {
 	tests := []struct {
 		name           string
-		fakeProducts   catalog.ProductPage
+		fakeProducts   []catalog.Product
+		fakeTotal      int64
 		fakeError      error
 		queryParams    map[string]string
 		expectedStatus int
@@ -27,13 +28,11 @@ func TestGetProducts(t *testing.T) {
 	}{
 		{
 			name: "fetch products list ok",
-			fakeProducts: catalog.ProductPage{
-				Total: 2,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-					{Category: "bar"},
-				},
+			fakeProducts: []catalog.Product{
+				{Category: "foo", Price: priceGenerator("10.00")},
+				{Category: "bar", Price: priceGenerator("4.99")},
 			},
+			fakeTotal: 2,
 			queryParams: map[string]string{
 				"limit":         "2",
 				"offset":        "0",
@@ -42,11 +41,11 @@ func TestGetProducts(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			expectedCT:     "application/json",
-			expectedBody: catalog.ProductPage{
+			expectedBody: ProductPage{
 				Total: 2,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-					{Category: "bar"},
+				Products: []ProductView{
+					{Category: "foo", Price: 10.00},
+					{Category: "bar", Price: 4.99},
 				},
 			},
 		},
@@ -61,23 +60,24 @@ func TestGetProducts(t *testing.T) {
 		},
 		{
 			name: "max limit parameter",
-			fakeProducts: catalog.ProductPage{
-				Total: 2,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-					{Category: "bar"},
-				},
+			fakeProducts: []catalog.Product{
+				{Category: "foo", Price: priceGenerator("10.00")},
+				{Category: "bar", Price: priceGenerator("4.99")},
 			},
+			fakeTotal: 2,
 			queryParams: map[string]string{
-				"limit": "200",
+				"limit":         "2",
+				"offset":        "0",
+				"category_code": "0xFFFF",
+				"max_price":     "9.99",
 			},
 			expectedStatus: http.StatusOK,
 			expectedCT:     "application/json",
-			expectedBody: catalog.ProductPage{
+			expectedBody: ProductPage{
 				Total: 2,
-				Products: []catalog.ProductView{
-					{Category: "foo"},
-					{Category: "bar"},
+				Products: []ProductView{
+					{Category: "foo", Price: 10.00},
+					{Category: "bar", Price: 4.99},
 				},
 			},
 		},
@@ -101,7 +101,6 @@ func TestGetProducts(t *testing.T) {
 		},
 		{
 			name:           "catalog service error",
-			fakeProducts:   catalog.ProductPage{},
 			fakeError:      errorsapi.ErrRepositoryFetchProducts,
 			expectedStatus: http.StatusInternalServerError,
 			expectedCT:     "application/json",
@@ -112,7 +111,7 @@ func TestGetProducts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewFakeService()
-			s.SetListProductsResponse(tt.fakeProducts, tt.fakeError)
+			s.SetListProductsResponse(tt.fakeProducts, tt.fakeTotal, tt.fakeError)
 			h := New(s)
 			r := Routes(h)
 
@@ -150,19 +149,29 @@ func TestGetDetailProduct(t *testing.T) {
 	tests := []struct {
 		name           string
 		productCode    string
-		fakeDetails    catalog.ProductView
+		fakeDetails    catalog.Product
 		fakeError      error
 		expectedStatus int
 		expectedCT     string
 		expectedBody   any
 	}{
 		{
-			name:           "retrieve product details ok",
-			productCode:    "PROD001",
-			fakeDetails:    catalog.ProductView{Code: "PROD001"},
+			name:        "retrieve product details ok",
+			productCode: "PROD001",
+			fakeDetails: catalog.Product{Code: "PROD001", Category: "FOO", Price: priceGenerator("1.00"),
+				Variants: []catalog.Variant{
+					{Name: "Variant A", SKU: "SKU001A", Price: priceGenerator("9.00")},
+					{Name: "Variant B", SKU: "SKU001B", Price: priceGenerator("1.00")},
+				},
+			},
 			expectedStatus: http.StatusOK,
 			expectedCT:     "application/json",
-			expectedBody:   catalog.ProductView{Code: "PROD001"},
+			expectedBody: ProductView{Code: "PROD001", Category: "FOO", Price: 1.00,
+				Variants: []VariantView{
+					{Name: "Variant A", SKU: "SKU001A", Price: 9.00},
+					{Name: "Variant B", SKU: "SKU001B", Price: 1.00},
+				},
+			},
 		},
 		{
 			name:           "invalid product code",

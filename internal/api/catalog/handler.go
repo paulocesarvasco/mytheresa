@@ -14,8 +14,8 @@ import (
 )
 
 type Service interface {
-	ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (catalog.ProductPage, error)
-	DetailProduct(ctx context.Context, code string) (catalog.ProductView, error)
+	ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]catalog.Product, int64, error)
+	DetailProduct(ctx context.Context, code string) (catalog.Product, error)
 }
 
 type Handler struct {
@@ -33,7 +33,7 @@ func New(s Service) *Handler {
 func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	p := params.QueryParamsFromContext(r.Context())
 
-	products, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
+	products, total, err := h.service.ListProducts(r.Context(), p.Limit, p.Offset, p.CategoryCode, p.MaxPrice)
 	if err != nil {
 		h.log.Error(r.Context(), "get products list failed",
 			"err", err)
@@ -41,7 +41,16 @@ func (h *Handler) GetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.OKResponse(w, r, products)
+	page := make([]ProductView, len(products))
+	for i, p := range products {
+		page[i] = ProductView{
+			Category: p.Category,
+			Code:     p.Code,
+			Price:    p.Price.InexactFloat64(),
+		}
+	}
+
+	api.OKResponse(w, r, ProductPage{Products: page, Total: total})
 }
 
 func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
@@ -63,5 +72,18 @@ func (h *Handler) GetDetailProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.OKResponse(w, r, details)
+	variants := make([]VariantView, len(details.Variants))
+	for i, v := range details.Variants {
+		variants[i] = VariantView{
+			Name:  v.Name,
+			SKU:   v.SKU,
+			Price: v.Price.InexactFloat64(),
+		}
+	}
+
+	api.OKResponse(w, r, ProductView{Category: details.Category,
+		Code:     details.Code,
+		Price:    details.Price.InexactFloat64(),
+		Variants: variants,
+	})
 }

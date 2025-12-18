@@ -24,40 +24,37 @@ func New(store ProductStore) *Service {
 		store: store}
 }
 
-func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) (ProductPage, error) {
+func (s *Service) ListProducts(ctx context.Context, limit, offset int, categoryCode string, maxPrice *decimal.Decimal) ([]Product, int64, error) {
 	res, total, err := s.store.ListProducts(ctx, limit, offset, categoryCode, maxPrice)
 	if err != nil {
-		return ProductPage{}, err
+		return nil, 0, err
 	}
-
-	products := make([]ProductView, len(res))
+	products := make([]Product, len(res))
 	for i, p := range res {
-		products[i] = ProductView{
+		products[i] = Product{
 			Category: p.Category.Code,
 			Code:     p.Code,
-			Price:    p.Price.InexactFloat64(),
+			Price:    &p.Price,
 		}
 	}
-
-	// TODO: handle cases without results
-	return ProductPage{Products: products, Total: total}, nil
+	return products, total, nil
 }
 
-func (s *Service) DetailProduct(ctx context.Context, code string) (ProductView, error) {
+func (s *Service) DetailProduct(ctx context.Context, code string) (Product, error) {
 	product, err := s.store.GetByCode(ctx, code)
 	if err != nil {
-		return ProductView{}, err
+		return Product{}, err
 	}
 
-	variants := make([]VariantView, len(product.Variants))
+	variants := make([]Variant, len(product.Variants))
 	for i, v := range product.Variants {
-		variants[i] = toVariantView(v, product.Price.InexactFloat64())
+		variants[i] = mountVariant(v, &product.Price)
 	}
 
-	return ProductView{
+	return Product{
 		Category: product.Category.Code,
 		Code:     product.Code,
-		Price:    product.Price.InexactFloat64(),
+		Price:    &product.Price,
 		Variants: variants,
 	}, nil
 }

@@ -15,14 +15,16 @@ func TestGetProducts(t *testing.T) {
 		fakeProducts     []repository.Product
 		fakeTotal        int64
 		fakeError        error
-		expectedProducts ProductPage
+		expectedProducts []Product
+		expetedTotal     int64
 		expectedError    error
 	}{
 		{
 			name:             "list products succeeds",
 			fakeProducts:     []repository.Product{{ID: 1, Code: "PROD001", Price: decimal.New(10, 0), CategoryID: 1, Category: repository.Category{Code: "FOO"}}},
 			fakeTotal:        1,
-			expectedProducts: ProductPage{Products: []ProductView{{Category: "FOO", Code: "PROD001", Price: 10}}, Total: 1},
+			expectedProducts: []Product{{Category: "FOO", Code: "PROD001", Price: priceGenerator("10")}},
+			expetedTotal:     1,
 		},
 		{
 			name:          "list products fails on repository error",
@@ -39,9 +41,10 @@ func TestGetProducts(t *testing.T) {
 			service := New(store)
 
 			price := decimal.New(10, 0)
-			products, err := service.ListProducts(t.Context(), 10, 0, "FOO", &price)
+			products, total, err := service.ListProducts(t.Context(), 10, 0, "FOO", &price)
 
 			assert.Equal(t, tt.expectedProducts, products)
+			assert.Equal(t, tt.expetedTotal, total)
 			assert.Equal(t, tt.expectedError, err)
 		})
 	}
@@ -52,22 +55,22 @@ func TestDetailProduct(t *testing.T) {
 		name            string
 		fakeDetails     repository.Product
 		fakeError       error
-		expectedDetails ProductView
+		expectedDetails Product
 		expectedError   error
 	}{
 		{
 			name: "detail product uses variant price when present",
 			fakeDetails: repository.Product{ID: 1, Code: "PROD001", Price: *priceGenerator("9.99"), CategoryID: 1, Category: repository.Category{Code: "FOO"},
 				Variants: []repository.Variant{{ID: 1, ProductID: 1, Name: "Variant A", SKU: "SKU001A"}}},
-			expectedDetails: ProductView{Category: "FOO", Code: "PROD001", Price: 9.99,
-				Variants: []VariantView{{Name: "Variant A", SKU: "SKU001A", Price: 9.99}}},
+			expectedDetails: Product{Category: "FOO", Code: "PROD001", Price: priceGenerator("9.99"),
+				Variants: []Variant{{Name: "Variant A", SKU: "SKU001A", Price: priceGenerator("9.99")}}},
 		},
 		{
 			name: "detail product applies price inheritance when variant price is not set",
 			fakeDetails: repository.Product{ID: 1, Code: "PROD001", Price: *priceGenerator("9.99"), CategoryID: 1, Category: repository.Category{Code: "FOO"},
 				Variants: []repository.Variant{{ID: 1, ProductID: 1, Name: "Variant B", SKU: "SKU001B", Price: priceGenerator("7.99")}}},
-			expectedDetails: ProductView{Category: "FOO", Code: "PROD001", Price: 9.99,
-				Variants: []VariantView{{Name: "Variant B", SKU: "SKU001B", Price: 7.99}}},
+			expectedDetails: Product{Category: "FOO", Code: "PROD001", Price: priceGenerator("9.99"),
+				Variants: []Variant{{Name: "Variant B", SKU: "SKU001B", Price: priceGenerator("7.99")}}},
 		},
 		{
 			name:          "detail product returns error on repository failure",

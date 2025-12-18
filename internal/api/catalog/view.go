@@ -1,4 +1,4 @@
-package catalog
+package catalogapi
 
 type ProductPage struct {
 	Products []ProductView `json:"products"`

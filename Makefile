@@ -1,7 +1,8 @@
 tidy ::
 	@go mod tidy
 
-seed ::
+seed :: docker-up-db
+	@sleep 3
 	@sed -i 's/^POSTGRES_HOST=challenge-database$$/POSTGRES_HOST=localhost/' .env
 	@go run cmd/seed/main.go
 

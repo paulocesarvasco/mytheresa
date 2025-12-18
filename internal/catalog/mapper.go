@@ -1,19 +1,22 @@
 package catalog
 
-import "github.com/mytheresa/go-hiring-challenge/internal/repository"
+import (
+	"github.com/mytheresa/go-hiring-challenge/internal/repository"
+	"github.com/shopspring/decimal"
+)
 
-func toVariantView(v repository.Variant, productPrice float64) VariantView {
+func mountVariant(v repository.Variant, productPrice *decimal.Decimal) Variant {
 	if v.Price == nil {
-		return VariantView{
+		return Variant{
 			Name:  v.Name,
 			SKU:   v.SKU,
 			Price: productPrice,
 		}
 	}
 
-	return VariantView{
+	return Variant{
 		Name:  v.Name,
 		SKU:   v.SKU,
-		Price: v.Price.InexactFloat64(),
+		Price: v.Price,
 	}
 }
